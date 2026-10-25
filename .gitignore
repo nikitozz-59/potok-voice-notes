@@ -1,0 +1,49 @@
+# Gradle / build
+.gradle/
+build/
+app/build/
+app/release/
+captures/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Wrapper — НЕ игнорируем (нужен для сборки на любой ОС)
+# gradlew, gradlew.bat, gradle/wrapper/ — коммитим
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+local.properties
+.navigation/
+captures/
+
+# Native
+*.so
+.externalNativeBuild/
+.cxx/
+
+# Kotlin
+*.kotlin_metadata
+
+# Logs / OS
+*.log
+*.swp
+.DS_Store
+Thumbs.db
+
+# Ключи подписи (если появятся — никогда в репозиторий)
+*.jks
+*.keystore
+keystore.properties
+
+# Машинно-зависимые пути SDK
+local.properties
+
+# Временные сборки и бэкапы
+*.bak
+*.orig
+~$*

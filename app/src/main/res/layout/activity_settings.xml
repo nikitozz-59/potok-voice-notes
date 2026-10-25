@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F7F9FC">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Nexara (STT)"
+            android:textSize="13sp"
+            android:textColor="@color/primary"
+            android:textStyle="bold"
+            android:paddingBottom="6dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="API-ключ Nexara хранится только на телефоне."
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:paddingBottom="6dp" />
+
+        <EditText
+            android:id="@+id/keyInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/key_hint"
+            android:inputType="textVisiblePassword"
+            android:textSize="14sp"
+            android:fontFamily="monospace" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="Альтернативный STT (OpenAI-совместимый Whisper)"
+            android:textSize="13sp"
+            android:textColor="@color/primary"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Если Nexara недоступен — можно использовать Groq, OpenAI или другой Whisper-совместимый endpoint. Оставьте пустым для использования Nexara."
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:paddingBottom="6dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Провайдер (nexara или openai)"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/sttProviderInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="nexara"
+            android:inputType="text"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Base URL (если openai)"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/sttBaseUrlInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="https://api.groq.com/openai/v1"
+            android:inputType="textUri"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Модель (если openai)"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/sttModelInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="whisper-large-v3"
+            android:inputType="text"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="API-ключ (если openai)"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/sttKeyInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint=""
+            android:inputType="textVisiblePassword"
+            android:textSize="14sp"
+            android:fontFamily="monospace" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="LLM (ИИ-извлечение)"
+            android:textSize="13sp"
+            android:textColor="@color/primary"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Для типизации заметки и извлечения даты напоминания."
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:paddingBottom="6dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Base URL (OpenAI-совместимый)"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/llmBaseUrlInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="https://plusvibeapi.ru/v1"
+            android:inputType="textUri"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Модель"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/llmModelInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="z-ai/glm-5.2"
+            android:inputType="text"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="API-ключ"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/llmKeyInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint=""
+            android:inputType="textVisiblePassword"
+            android:textSize="14sp"
+            android:fontFamily="monospace" />
+
+        <Button
+            android:id="@+id/processorsBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="Обработчики"
+            android:background="@drawable/bg_chip"
+            android:textColor="@color/text_primary" />
+
+        <Button
+            android:id="@+id/saveBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/save"
+            android:background="@color/primary"
+            android:textColor="#FFFFFF" />
+
+        <TextView
+            android:id="@+id/statusLine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary" />
+    </LinearLayout>
+</ScrollView>

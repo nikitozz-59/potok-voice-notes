@@ -1,0 +1,17 @@
+# Переносы строк для кросс-платформенной сборки
+# Unix-обёртка — LF, чтобы bash-скрипт запускался на Linux/macOS
+gradlew        text eol=lf
+# Windows-обёртка — CRLF
+gradlew.bat    text eol=crlf
+
+# Бинарные файлы — не трогать переносы
+*.jar          binary
+*.png          binary
+*.jpg          binary
+*.jpeg         binary
+*.webp         binary
+*.9.png        binary
+*.gif          binary
+*.icns         binary
+*.otf          binary
+*.ttf          binary

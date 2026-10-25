@@ -1,0 +1,39 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.nexara.voicenotes'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.nexara.voicenotes'
+        minSdk 26
+        targetSdk 34
+        versionCode 23
+        versionName '3.2'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    testOptions {
+        unitTests {
+            returnDefaultValues = true
+        }
+    }
+}
+
+dependencies {
+    implementation 'io.github.jaredmdobson:concentus:1.0.2'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
+}

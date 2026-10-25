@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Поток</string>
+    <string name="service_title">Релей активен</string>
+    <string name="service_text">Слушает 127.0.0.1:8080 для часов</string>
+    <string name="settings">Настройки</string>
+    <string name="key_hint">API-ключ Nexara (nx-…)</string>
+    <string name="save">Сохранить</string>
+    <string name="start_service">Запустить релей</string>
+    <string name="stop_service">Остановить релей</string>
+    <string name="empty">Заметок пока нет — запишите на часах</string>
+</resources>
