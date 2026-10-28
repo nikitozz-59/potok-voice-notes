@@ -175,6 +175,77 @@ public class NotesStore {
     }
 
     /**
+     * Обновить и transcript, и text одной операцией (после STT).
+     * ВАЖНО: писать оба поля — иначе при retry LLM (когда transcript уже в БД,
+     * а STT-блок не выполнялся) text остаётся пустым и часы получают пустой
+     * текст при status=done.
+     */
+    public void updateTranscriptAndText(long id, String text) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(NotesDbHelper.COL_TRANSCRIPT, text);
+        cv.put(NotesDbHelper.COL_TEXT, text);
+        cv.put(NotesDbHelper.COL_UPDATED_AT, System.currentTimeMillis());
+        db.update(NotesDbHelper.TABLE, cv, NotesDbHelper.COL_ID + "=?",
+            new String[]{String.valueOf(id)});
+    }
+
+    /**
+     * Атомарный захват заметки в обработку: переводит state PENDING→PROCESSING
+     * только если текущее состояние PENDING. Возвращает true, если строка
+     * захвачена этим вызовом (можно обрабатывать), false — если уже забрана
+     * другим воркером или находится в другом состоянии.
+     *
+     * Решает гонку повторной отправки: CONFLICT_REPLACE в addOrUpdate затирал
+     * in-flight работу (state сбрасывался, retryCount обнулялся, WAV перезаписывался).
+     */
+    public boolean claimForProcessing(long id) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(NotesDbHelper.COL_STATE, NotesDbHelper.STATE_PROCESSING);
+        cv.put(NotesDbHelper.COL_UPDATED_AT, System.currentTimeMillis());
+        int rows = db.update(NotesDbHelper.TABLE, cv,
+            NotesDbHelper.COL_ID + "=? AND " + NotesDbHelper.COL_STATE + "=?",
+            new String[]{String.valueOf(id), NotesDbHelper.STATE_PENDING});
+        return rows > 0;
+    }
+
+    /**
+     * Восстановление зависших PROCESSING: если процесс убит во время STT/LLM
+     * (без foreground-сервиса это гарантировано), заметка навсегда остаётся в
+     * PROCESSING и getByState(PENDING) её больше не выберет. Переводим
+     * PROCESSING старше timeoutMs обратно в PENDING для повторной обработки.
+     */
+    public int recoverStaleProcessing(long timeoutMs) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        long threshold = System.currentTimeMillis() - timeoutMs;
+        ContentValues cv = new ContentValues();
+        cv.put(NotesDbHelper.COL_STATE, NotesDbHelper.STATE_PENDING);
+        cv.put(NotesDbHelper.COL_LAST_ERROR, "stale processing recovered");
+        cv.put(NotesDbHelper.COL_UPDATED_AT, System.currentTimeMillis());
+        return db.update(NotesDbHelper.TABLE, cv,
+            NotesDbHelper.COL_STATE + "=? AND " + NotesDbHelper.COL_UPDATED_AT + " < ?",
+            new String[]{NotesDbHelper.STATE_PROCESSING, String.valueOf(threshold)});
+    }
+
+    /**
+     * Часы-фейсинг status — проекция внутреннего state, а не отдельное поле.
+     * Это единственный источник правды: в БД status хранится как проекция,
+     * /sync отдаёт его как проекцию. Рассинхрон status/state невозможен.
+     *
+     *   DONE                              → "done"
+     *   FAILED, retryCount >= MAX_RETRIES → "error" (терминальная, часы видят причину)
+     *   PENDING / PROCESSING / FAILED(early) → "pending" (телефон ещё борется)
+     */
+    public static String statusForState(String state, int retryCount) {
+        if (NotesDbHelper.STATE_DONE.equals(state)) return "done";
+        if (NotesDbHelper.STATE_FAILED.equals(state) && retryCount >= NotesDbHelper.MAX_RETRIES) {
+            return "error";
+        }
+        return "pending";
+    }
+
+    /**
      * Отметить как полностью обработанную.
      */
     public void markDone(long id) {
@@ -505,7 +576,8 @@ public class NotesStore {
         cv.put(NotesDbHelper.COL_DUR, n.durSec);
         cv.put(NotesDbHelper.COL_SIZE, n.sizeBytes);
         cv.put(NotesDbHelper.COL_TEXT, n.text == null ? "" : n.text);
-        cv.put(NotesDbHelper.COL_STATUS, n.status == null ? "done" : n.status);
+        // status — проекция state (единственный источник правды), не отдельное поле.
+        cv.put(NotesDbHelper.COL_STATUS, statusForState(n.state, n.retryCount));
         cv.put(NotesDbHelper.COL_TYPE, n.type == null ? "note" : n.type);
         cv.put(NotesDbHelper.COL_SUMMARY, n.summary == null ? "" : n.summary);
         cv.put(NotesDbHelper.COL_EVENT_TITLE, n.eventTitle == null ? "" : n.eventTitle);

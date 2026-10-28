@@ -151,6 +151,8 @@ public class MainActivity extends Activity {
             startActivity(new Intent(this, SearchActivity.class));
         });
 
+        findViewById(R.id.addTextBtn).setOnClickListener(v -> showTextNoteDialog());
+
         cancelBtn.setOnClickListener(v -> {
             cancelRecording();
         });
@@ -723,68 +725,10 @@ public class MainActivity extends Activity {
         try {
             byte[] audioData = java.nio.file.Files.readAllBytes(f.toPath());
             String text = stt.transcribe(audioData, f.getName(), "ru");
-
-            String type = "note";
-            String summary = "";
-            String eventTitle = "";
-            String dueIso = null;
-            Integer remindOffset = null;
-            List<String> items = null;
-            try {
-                LlmProvider llm = ProviderFactory.createLlmProvider(this);
-                LlmExtractor.Struct st = llm != null ? llm.extract(text) : LlmExtractor.parseResponse(null);
-                type = st.type;
-                summary = st.summary;
-                eventTitle = st.eventTitle;
-                dueIso = st.dueIso;
-                remindOffset = st.remindOffsetMin;
-                items = st.items;
-            } catch (Exception e) {}
-
-            NotesStore store = new NotesStore(this);
-            NotesStore.Note n = new NotesStore.Note();
-            n.id = System.currentTimeMillis();
-            n.ts = System.currentTimeMillis();
-            n.durSec = Math.max(1, (int) ((System.currentTimeMillis() - startTime) / 1000));
-            n.sizeBytes = (int) f.length();
-            n.text = text;
-            n.transcript = text;
-            n.status = "done";
-            n.type = type;
-            n.summary = summary;
-            n.eventTitle = eventTitle;
-            n.dueIso = dueIso;
-            n.remindOffsetMin = remindOffset;
-            n.items = CheckItem.wrap(items);
-
-            store.addOrUpdate(n);
-            // Локальное напоминание — AlarmManager будит в dueIso − remindOffset.
-            // (заменило интеграцию с системным календарём)
-            if (dueIso != null && ("reminder".equals(type) || "task".equals(type))) {
-                ReminderScheduler.schedule(this, n);
-            }
-            // State tracking: если LLM не отработал — в очередь
-            if (n.summary != null && !n.summary.isEmpty()) {
-                store.markDone(n.id);
-                // Автосвязи с существующими мыслями (фон)
-                AutoLinker.linkAsync(MainActivity.this, n.id);
-            } else {
-                store.markFailed(n.id, "LLM returned empty summary (phone)");
-                ProcessingQueue.getInstance(this).trigger();
-            }
+            int durSec = Math.max(1, (int) ((System.currentTimeMillis() - startTime) / 1000));
+            int sizeBytes = (int) f.length();
+            processTranscript(text, durSec, sizeBytes);
             f.delete();
-
-            RecordWidgetProvider.updateAll(this);
-
-            sendBroadcast(new Intent(RelayService.ACTION_NOTE_ADDED));
-
-            final String finType = type;
-            final String finSummary = summary;
-            runOnUiThread(() -> {
-                updateSyncBanner();
-                Toast.makeText(this, "Сохранено: " + finType
-                        + (finSummary.isEmpty() ? "" : " · " + finSummary), Toast.LENGTH_SHORT).show();
-            });
         } catch (Exception e) {
             final String msg = e.getMessage() != null ? e.getMessage() : "ошибка";
             runOnUiThread(() -> {
@@ -792,6 +736,108 @@ public class MainActivity extends Activity {
                 updateSyncBanner();
             });
         }
+    }
+
+    /**
+     * Обработка текста заметки: LLM-разбор (тип/суть/время/пункты) + сохранение +
+     * планирование напоминания + автосвязи + broadcast.
+     *
+     * Используется двумя путями:
+     *  - голосовой поток: STT отдаёт текст → processTranscript(text, durSec, sizeBytes);
+     *  - ручная текстовая заметка: пользователь вводит текст → processTranscript(text, 0, 0).
+     * STT здесь нет — только LLM-разбор готового текста.
+     */
+    private void processTranscript(final String text, int durSec, int sizeBytes) {
+        String type = "note";
+        String summary = "";
+        String eventTitle = "";
+        String dueIso = null;
+        Integer remindOffset = null;
+        List<String> items = null;
+        try {
+            LlmProvider llm = ProviderFactory.createLlmProvider(this);
+            LlmExtractor.Struct st = llm != null ? llm.extract(text) : LlmExtractor.parseResponse(null);
+            type = st.type;
+            summary = st.summary;
+            eventTitle = st.eventTitle;
+            dueIso = st.dueIso;
+            remindOffset = st.remindOffsetMin;
+            items = st.items;
+        } catch (Exception e) {}
+
+        NotesStore store = new NotesStore(this);
+        NotesStore.Note n = new NotesStore.Note();
+        n.id = System.currentTimeMillis();
+        n.ts = System.currentTimeMillis();
+        n.durSec = durSec;
+        n.sizeBytes = sizeBytes;
+        n.text = text;
+        n.transcript = text;
+        n.status = "done";
+        n.type = type;
+        n.summary = summary;
+        n.eventTitle = eventTitle;
+        n.dueIso = dueIso;
+        n.remindOffsetMin = remindOffset;
+        n.items = CheckItem.wrap(items);
+
+        store.addOrUpdate(n);
+        // Локальное напоминание — AlarmManager будит в dueIso − remindOffset.
+        // (заменило интеграцию с системным календарём)
+        if (dueIso != null && ("reminder".equals(type) || "task".equals(type))) {
+            ReminderScheduler.schedule(this, n);
+        }
+        // State tracking: если LLM не отработал — в очередь
+        if (n.summary != null && !n.summary.isEmpty()) {
+            store.markDone(n.id);
+            // Автосвязи с существующими мыслями (фон)
+            AutoLinker.linkAsync(MainActivity.this, n.id);
+        } else {
+            store.markFailed(n.id, "LLM returned empty summary (phone)");
+            ProcessingQueue.getInstance(this).trigger();
+        }
+
+        RecordWidgetProvider.updateAll(this);
+
+        sendBroadcast(new Intent(RelayService.ACTION_NOTE_ADDED));
+
+        final String finType = type;
+        final String finSummary = summary;
+        runOnUiThread(() -> {
+            updateSyncBanner();
+            Toast.makeText(this, "Сохранено: " + finType
+                    + (finSummary.isEmpty() ? "" : " · " + finSummary), Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    /**
+     * Диалог ввода ручной текстовой заметки (без записи голосом).
+     * Многострочный EditText → processTranscript(text, 0, 0) в фоне.
+     * LLM-разбор работает как для голосовых: тип/суть/время/чек-лист.
+     */
+    private void showTextNoteDialog() {
+        final android.widget.EditText input = new android.widget.EditText(this);
+        input.setHint("Напечатайте мысль, дело или список…");
+        input.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+            | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        float density = getResources().getDisplayMetrics().density;
+        int p = (int) (16 * density);
+        input.setPadding(p, p, p, p);
+        input.setMinLines(3);
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("Текстовая заметка")
+            .setView(input)
+            .setPositiveButton("Сохранить", (d, w) -> {
+                String txt = input.getText().toString().trim();
+                if (txt.isEmpty()) return;
+                syncText.setText("Обработка…");
+                syncIcon.setText("…");
+                syncIcon.setTextColor(ThemeManager.accent(this));
+                new Thread(() -> processTranscript(txt, 0, 0)).start();
+            })
+            .setNegativeButton("Отмена", null)
+            .show();
     }
 
     // ---------- авто-обработка необработанных (без кнопки) ----------

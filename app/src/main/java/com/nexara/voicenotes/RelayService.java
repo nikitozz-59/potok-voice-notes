@@ -66,109 +66,80 @@ public class RelayService extends Service {
     String getKey() { return ProviderFactory.getNexaraKey(this); }
     boolean hasKey() { String k = getKey(); return k != null && !k.isEmpty(); }
 
-    /** Обработка POST /transcribe — вызывается из NanoServer. Возвращает JSON-ответ для side. */
+    /**
+     * Обработка POST /transcribe — вызывается из NanoServer. Возвращает JSON-ответ для side.
+     *
+     * v3.4: ОТВЯЗАН от STT+LLM. Декодирует Opus→WAV (быстро, локально), сохраняет
+     * WAV в cacheDir, создаёт заметку с state=pending и ставит в ProcessingQueue.
+     * STT и LLM идёт асинхронно в очереди — часы получают {accepted} мгновенно
+     * и больше не висят 8-165с на облаке. Транскрипт приезжает на часы через SYNC.
+     */
     String handleTranscribe(String body) {
         try {
             JSONObject req = new JSONObject(body);
             String audioB64 = req.optString("audio", "");
             String name = req.optString("name", "rec.opus");
-            String lang = req.optString("language", "ru");
             if (audioB64.isEmpty()) return jsonError("no audio");
 
             byte[] opusBytes = Base64.decode(audioB64, Base64.NO_WRAP);
             Log.i("vn-relay", "zepp " + opusBytes.length + "B → decode");
             byte[] pcm = OpusDecoderWrapper.decode(opusBytes);
             byte[] wav = WavWriter.write(pcm, 16000, 1, 16);
-            Log.i("vn-relay", "pcm " + pcm.length + "B → wav " + wav.length + "B → nexara");
+            Log.i("vn-relay", "pcm " + pcm.length + "B → wav " + wav.length + "B → queue");
 
-            String key = getKey();
-            if (key == null || key.isEmpty()) return jsonError("нет ключа STT — задайте в Настройках");
+            // id — явным полем из body (часы присылают свой id). Fallback на parseId(name)
+            // только для совместимости со старыми часами; при расхождении часы не найдут
+            // свою заметку в SYNC и зависнут — поэтому WARN.
+            long id = req.optLong("id", 0);
+            if (id <= 0) {
+                id = parseId(name);
+                Log.w("vn-relay", "no explicit id in body, parsed from name: " + id);
+            }
 
-            // STT через провайдер (nexara или openai-whisper)
-            SttProvider stt = ProviderFactory.createSttProvider(this);
-            if (stt == null) return jsonError("нет ключа STT — задайте в Настройках");
-            String text = stt.transcribe(wav, wavName(name), lang);
-            Log.i("vn-relay", "stt(" + stt.getName() + ") 200, text " + text.length() + " chars");
+            // Дедуп: если заметка с этим id уже обрабатывается (state=PROCESSING),
+            // не затираем in-flight работу (CONFLICT_REPLACE сбросил бы state и retryCount,
+            // перезаписал бы WAV). Просто подтверждаем приём — часы не висят.
+            NotesStore.Note existing = store.getById(id);
+            if (existing != null && NotesDbHelper.STATE_PROCESSING.equals(existing.state)) {
+                Log.i("vn-relay", "note " + id + " already processing — dedup ack");
+                return "{\"accepted\":true,\"id\":" + id + ",\"dedup\":true}";
+            }
+
+            // WAV во временный файл — ProcessingQueue сделает STT асинхронно.
+            java.io.File wavFile = new java.io.File(getCacheDir(), "note_" + id + ".wav");
+            java.nio.file.Files.write(wavFile.toPath(), wav);
 
             NotesStore.Note n = new NotesStore.Note();
-            n.id = parseId(name);
-            n.ts = n.id; // ID = timestamp с часов, а не время телефона
+            n.id = id;
+            n.ts = id; // ID = timestamp с часов, а не время телефона
             n.durSec = pcm.length / 32000;
             n.sizeBytes = opusBytes.length;
-            n.text = text;
-            n.transcript = text;
-            n.status = "done";
-
-            try {
-                LlmProvider llm = ProviderFactory.createLlmProvider(this);
-                LlmExtractor.Struct st = llm != null
-                    ? llm.extract(text)
-                    : LlmExtractor.parseResponse(null);
-                n.type = st.type;
-                n.summary = st.summary;
-                n.eventTitle = st.eventTitle;
-                n.dueIso = st.dueIso;
-                n.remindOffsetMin = st.remindOffsetMin;
-                n.items = CheckItem.wrap(st.items);
-                n.raw = st.raw;
-                Log.i("vn-relay", "llm type=" + st.type + " due=" + st.dueIso + " remind=" + st.remindOffsetMin);
-            } catch (Exception e) {
-                Log.w("vn-relay", "llm failed: " + e.getMessage());
-            }
-
-            // Локальное напоминание — AlarmManager будит в dueIso − remindOffset.
-            // (заменило интеграцию с системным календарём). Повторная отправка
-            // той же заметки с часов безопасна: schedule перезаписывает
-            // существующий PendingIntent (FLAG_UPDATE_CURRENT).
-            if (n.dueIso != null
-                    && ("reminder".equals(n.type) || "task".equals(n.type))) {
-                ReminderScheduler.schedule(this, n);
-            }
-
+            n.text = "";
+            n.transcript = "";
+            // status не выставляем — noteToCv вычисляет как проекцию state.
+            n.type = "note";
+            n.state = NotesDbHelper.STATE_PENDING;
+            n.audioPath = wavFile.getAbsolutePath();
+            n.updatedAt = System.currentTimeMillis();
             store.addOrUpdate(n);
+            Log.i("vn-relay", "accepted note " + id + " → queue (wav " + wavFile.getName() + ")");
+
+            // Асинхронная обработка: STT → LLM → reminder → broadcast.
+            ProcessingQueue.getInstance(this).trigger();
             lastError = null;
-
-            // Отслеживание состояния для очереди обработки
-            boolean llmOk = n.summary != null && !n.summary.isEmpty();
-            if (llmOk) {
-                store.markDone(n.id);
-            } else {
-                // LLM не сработал — в очередь на retry
-                store.markFailed(n.id, "LLM returned empty summary");
-                ProcessingQueue.getInstance(this).trigger();
-            }
-
-            RecordWidgetProvider.updateAll(this);
 
             android.content.Intent bc = new android.content.Intent(ACTION_NOTE_ADDED);
             sendBroadcast(bc);
 
-            return "{\"text\":" + jsonString(text) + "}";
+            return "{\"accepted\":true,\"id\":" + id + "}";
         } catch (Exception e) {
             String msg = e.getMessage() != null ? e.getMessage() : String.valueOf(e);
             Log.e("vn-relay", "transcribe err: " + msg, e);
-            String low = msg.toLowerCase();
-            boolean transientErr = low.contains("abort") || low.contains("reset")
-                    || low.contains("timed out") || low.contains("timeout")
-                    || low.contains("unable to resolve") || low.contains("failed to connect")
-                    || low.contains("stream closed") || low.contains("eof");
-            if (transientErr) {
-                // Не «ошибка навсегда»: заметку оставляем в очереди — часы повторят.
-                lastError = null;
-                android.content.Intent bc = new android.content.Intent(ACTION_NOTE_ADDED);
-                sendBroadcast(bc);
-                return "{\"transient\":true,\"error\":" + jsonString(msg) + "}";
-            }
             lastError = msg;
             android.content.Intent bc = new android.content.Intent(ACTION_NOTE_ADDED);
             sendBroadcast(bc);
             return jsonError("relay: " + msg);
         }
-    }
-
-    private static String wavName(String opusName) {
-        if (opusName.endsWith(".opus")) return opusName.substring(0, opusName.length() - 5) + ".wav";
-        return opusName + ".wav";
     }
 
     public static long parseIsoToMillis(String iso) {
@@ -259,11 +230,20 @@ public class RelayService extends Service {
                   .append(",\"dur\":").append(n.durSec)
                   .append(",\"size\":").append(n.sizeBytes)
                   .append(",\"text\":").append(jsonString(n.text == null ? "" : n.text))
-                  .append(",\"status\":").append(jsonString(n.status == null ? "done" : n.status))
+                  .append(",\"status\":").append(jsonString(
+                      NotesStore.statusForState(n.state, n.retryCount)))
                   .append(",\"type\":").append(jsonString(n.type == null ? "note" : n.type))
                   .append(",\"summary\":").append(jsonString(n.summary == null ? "" : n.summary));
                 if (n.dueIso != null) sb.append(",\"due_iso\":").append(jsonString(n.dueIso));
                 if (n.calendarEventId > 0) sb.append(",\"calId\":").append(n.calendarEventId);
+                // При терминальной ошибке — отдаём причину (укороченную), чтобы часы
+                // показали «ОШИБКА: ...» вместо вечного «обработка…».
+                String st = NotesStore.statusForState(n.state, n.retryCount);
+                if ("error".equals(st) && n.lastError != null && !n.lastError.isEmpty()) {
+                    String le = n.lastError;
+                    if (le.length() > 120) le = le.substring(0, 117) + "…";
+                    sb.append(",\"last_error\":").append(jsonString(le));
+                }
                 if (n.items != null && !n.items.isEmpty()) {
                     sb.append(",\"items\":[");
                     for (int i = 0; i < n.items.size(); i++) {

@@ -44,8 +44,8 @@ public class NexaraClient {
             c.setRequestMethod("POST");
             c.setRequestProperty("Authorization", "Bearer " + apiKey);
             c.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
-            c.setConnectTimeout(30000);
-            c.setReadTimeout(60000);
+            c.setConnectTimeout(10000);
+            c.setReadTimeout(30000);
 
             OutputStream os = c.getOutputStream();
             writePart(os, boundary, "file", filename, "application/octet-stream", wav);

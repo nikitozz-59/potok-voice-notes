@@ -175,4 +175,123 @@ public class LlmExtractorFallbackTest {
         assertEquals("Монтаж", result.summary);
         assertEquals("2026-10-24T16:00:00", result.dueIso);
     }
+
+    // === Checklist fallback: type=list + пустой items → split транскрипта ===
+
+    @Test
+    public void splitItems_commaSeparated() {
+        java.util.List<String> r = LlmExtractor.splitItems("купи хлеб, молоко, масло");
+        assertEquals(3, r.size());
+        assertEquals("Купи хлеб", r.get(0));
+        assertEquals("Молоко", r.get(1));
+        assertEquals("Масло", r.get(2));
+    }
+
+    @Test
+    public void splitItems_andConjunction() {
+        java.util.List<String> r = LlmExtractor.splitItems("купи хлеб и молоко");
+        assertEquals(2, r.size());
+        assertEquals("Купи хлеб", r.get(0));
+        assertEquals("Молоко", r.get(1));
+    }
+
+    @Test
+    public void splitItems_newlineSeparated() {
+        java.util.List<String> r = LlmExtractor.splitItems("купить хлеб\nпозвонить маме\nзабрать посылку");
+        assertEquals(3, r.size());
+        assertEquals("Купить хлеб", r.get(0));
+        assertEquals("Позвонить маме", r.get(1));
+        assertEquals("Забрать посылку", r.get(2));
+    }
+
+    @Test
+    public void splitItems_stripsPrefix() {
+        java.util.List<String> r = LlmExtractor.splitItems("список дел: купить хлеб, молоко");
+        assertEquals(2, r.size());
+        assertEquals("Купить хлеб", r.get(0));
+        assertEquals("Молоко", r.get(1));
+    }
+
+    @Test
+    public void splitItems_stripsNumbering() {
+        java.util.List<String> r = LlmExtractor.splitItems("1. купить хлеб\n2. позвонить маме");
+        assertEquals(2, r.size());
+        assertEquals("Купить хлеб", r.get(0));
+        assertEquals("Позвонить маме", r.get(1));
+    }
+
+    @Test
+    public void splitItems_mixedConjunctions() {
+        java.util.List<String> r = LlmExtractor.splitItems("купи хлеб, молоко и масло, потом позвонить маме");
+        assertEquals(4, r.size());
+        assertEquals("Купи хлеб", r.get(0));
+        assertEquals("Молоко", r.get(1));
+        assertEquals("Масло", r.get(2));
+        assertEquals("Позвонить маме", r.get(3));
+    }
+
+    @Test
+    public void splitItems_singleItem() {
+        java.util.List<String> r = LlmExtractor.splitItems("купи хлеб");
+        assertEquals(1, r.size());
+    }
+
+    @Test
+    public void splitItems_empty() {
+        assertEquals(0, LlmExtractor.splitItems("").size());
+        assertEquals(0, LlmExtractor.splitItems(null).size());
+    }
+
+    @Test
+    public void fallback_listEmptyItems_splitsTranscript() {
+        // Регрессия: LLM отдал type=list, но items пустой → квадратиков нет.
+        LlmExtractor.Struct s = new LlmExtractor.Struct();
+        s.type = "list";
+        s.summary = "Список дел";
+        s.items = null;
+        LlmExtractor.Struct r = LlmExtractor.validateAndFallback(s, "купи хлеб, молоко, масло");
+        assertEquals("list", r.type);
+        assertNotNull(r.items);
+        assertEquals(3, r.items.size());
+        assertEquals("Купи хлеб", r.items.get(0));
+    }
+
+    @Test
+    public void fallback_listEmptyItems_singleItem_demotesToTask() {
+        // Одно дело — это не список, понижаем до task.
+        LlmExtractor.Struct s = new LlmExtractor.Struct();
+        s.type = "list";
+        s.summary = "Купить хлеб";
+        s.items = null;
+        LlmExtractor.Struct r = LlmExtractor.validateAndFallback(s, "купи хлеб");
+        assertEquals("task", r.type);
+        assertNull(r.items);
+    }
+
+    @Test
+    public void fallback_listWithItems_keepsItems() {
+        // items уже есть — fallback не трогает.
+        java.util.List<String> items = new java.util.ArrayList<>();
+        items.add("Купить хлеб");
+        items.add("Купить молоко");
+        LlmExtractor.Struct s = new LlmExtractor.Struct();
+        s.type = "list";
+        s.summary = "Список дел";
+        s.items = items;
+        LlmExtractor.Struct r = LlmExtractor.validateAndFallback(s, "купи хлеб и молоко");
+        assertEquals("list", r.type);
+        assertEquals(2, r.items.size());
+        assertEquals("Купить хлеб", r.items.get(0));
+    }
+
+    @Test
+    public void fallback_listEmptyItems_noTranscript_demotesToNote() {
+        LlmExtractor.Struct s = new LlmExtractor.Struct();
+        s.type = "list";
+        s.summary = "Список";
+        s.items = null;
+        LlmExtractor.Struct r = LlmExtractor.validateAndFallback(s, "");
+        assertEquals("note", r.type);
+        assertNull(r.items);
+    }
 }

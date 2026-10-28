@@ -28,7 +28,9 @@ public class ProcessingQueue {
     private static final String TAG = "vn-queue";
 
     private static final long CHECK_INTERVAL_SEC = 30;
-    private static final int MAX_RETRIES = 5;
+    private static final int MAX_RETRIES = NotesDbHelper.MAX_RETRIES;
+    /** PROCESSING старше этого считается зависшим (процесс убит) → восстановить в PENDING. */
+    private static final long STALE_PROCESSING_MS = 5 * 60 * 1000; // 5 минут
 
     // Экспоненциальный backoff: [30, 60, 120, 300, 600] секунд
     private static final long[] BACKOFF_MS = {
@@ -57,6 +59,10 @@ public class ProcessingQueue {
     /** Запуск периодической проверки. Безопасно вызывать многократно. */
     public void start() {
         if (scheduler != null && !scheduler.isShutdown()) return;
+        // Восстановить зависшие PROCESSING (процесс убит во время STT/LLM) —
+        // без этого они навсегда выпадают из getByState(PENDING).
+        int recovered = store.recoverStaleProcessing(STALE_PROCESSING_MS);
+        if (recovered > 0) Log.i(TAG, "recovered " + recovered + " stale PROCESSING notes");
         scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleWithFixedDelay(
             this::processOnce,
@@ -89,7 +95,9 @@ public class ProcessingQueue {
         if (processing) return;
         processing = true;
         try {
-            // 1. Pending — новые заметки с транскриптом, ждущие LLM
+            // 1. Pending — новые заметки с транскриптом, ждущие LLM,
+            //    либо заметки с audioPath без транскрипта (асинхронный путь с часов:
+            //    handleTranscribe сохраняет WAV и ставит в очередь, STT идёт здесь).
             List<NotesStore.Note> pending = store.getByState(NotesDbHelper.STATE_PENDING);
             for (NotesStore.Note n : pending) {
                 if (n.transcript != null && !n.transcript.isEmpty()) {
@@ -97,6 +105,9 @@ public class ProcessingQueue {
                 } else if (n.text != null && !n.text.isEmpty()) {
                     // Обратная совместимость: transcript может быть в text
                     n.transcript = n.text;
+                    processNote(n);
+                } else if (n.audioPath != null && !n.audioPath.isEmpty()) {
+                    // v3.4: заметка с часов — STT ещё не сделан, делается в processNote.
                     processNote(n);
                 }
             }
@@ -133,11 +144,54 @@ public class ProcessingQueue {
      */
     private void processNote(NotesStore.Note n) {
         Log.i(TAG, "processing note " + n.id + " state=" + n.state);
-        // Отметить как processing
-        store.updateState(n.id, NotesDbHelper.STATE_PROCESSING, null, n.retryCount);
+
+        // Атомарный захват PENDING→PROCESSING. Если другой воркЕР уже забрал — пропускаем.
+        // Решает гонку повторной отправки с часов (CONFLICT_REPLACE затирал in-flight работу).
+        if (!store.claimForProcessing(n.id)) {
+            Log.i(TAG, "note " + n.id + " not in PENDING (already claimed/done) — skip");
+            return;
+        }
+        n.state = NotesDbHelper.STATE_PROCESSING;
 
         String transcript = (n.transcript != null && !n.transcript.isEmpty())
             ? n.transcript : n.text;
+
+        // v3.4: если транскрипта нет, но есть audioPath — STT из сохранённого WAV.
+        // (handleTranscribe с часов сохраняет WAV и отвечает {accepted} мгновенно;
+        // STT идёт здесь, асинхронно, не блокируя часы.)
+        if ((transcript == null || transcript.isEmpty()) && n.audioPath != null && !n.audioPath.isEmpty()) {
+            try {
+                java.io.File wavFile = new java.io.File(n.audioPath);
+                if (!wavFile.isFile()) {
+                    store.markFailed(n.id, "audio file missing: " + n.audioPath);
+                    ctx.sendBroadcast(new Intent(RelayService.ACTION_NOTE_ADDED));
+                    return;
+                }
+                SttProvider stt = ProviderFactory.createSttProvider(ctx);
+                if (stt == null) {
+                    store.markFailed(n.id, "no STT key configured");
+                    ctx.sendBroadcast(new Intent(RelayService.ACTION_NOTE_ADDED));
+                    return;
+                }
+                byte[] wav = java.nio.file.Files.readAllBytes(wavFile.toPath());
+                String text = stt.transcribe(wav, "note_" + n.id + ".wav", "ru");
+                Log.i(TAG, "stt(" + stt.getName() + ") note " + n.id + ": " + text.length() + " chars");
+                transcript = text;
+                n.transcript = text;
+                n.text = text;
+                // Пишем ОБА поля — иначе при retry LLM (transcript уже в БД, STT-блок
+                // пропускается) text остаётся пустым, часы получают пустой текст при done.
+                store.updateTranscriptAndText(n.id, text);
+            } catch (Throwable e) {
+                // Throwable, не Exception — ловим OOM на длинной записи (readAllBytes WAV).
+                String error = e.getMessage() != null ? e.getMessage() : String.valueOf(e);
+                Log.e(TAG, "stt note " + n.id + " failed: " + error, e);
+                store.markFailed(n.id, "STT: " + error);
+                ctx.sendBroadcast(new Intent(RelayService.ACTION_NOTE_ADDED));
+                return;
+            }
+        }
+
         if (transcript == null || transcript.isEmpty()) {
             store.markFailed(n.id, "empty transcript");
             return;
@@ -158,7 +212,8 @@ public class ProcessingQueue {
                 return;
             }
 
-            // Обновить заметку с результатами LLM
+            // Обновить заметку с результатами LLM.
+            // status НЕ выставляем — noteToCv вычисляет как проекцию state.
             n.type = st.type;
             n.summary = st.summary;
             n.eventTitle = st.eventTitle;
@@ -167,27 +222,43 @@ public class ProcessingQueue {
             n.items = CheckItem.wrap(st.items);
             n.raw = st.raw;
             n.transcript = transcript;
-            n.state = NotesDbHelper.STATE_DONE; // будет перезаписано если календарь упадёт
+            n.text = transcript;
+            n.state = NotesDbHelper.STATE_DONE;
 
-            // Локальное напоминание — AlarmManager будит в dueIso − remindOffset.
-            // (заменило интеграцию с системным календарём)
-            if (n.dueIso != null
-                    && ("reminder".equals(n.type) || "task".equals(n.type))) {
-                ReminderScheduler.schedule(ctx, n);
-            }
-
-            // Сохранить и отметить как done
+            // ПОРЯДОК: сначала persist результата, потом side effects.
+            // Side effect (ReminderScheduler) не имеет права отменять результат:
+            // на Android 12+ setExact без SCHEDULE_EXACT_ALARM бросает SecurityException.
             store.addOrUpdate(n);
             store.markDone(n.id);
             Log.i(TAG, "note " + n.id + " done: type=" + n.type + " sum='" + n.summary + "'");
 
-            // Автосвязи с существующими мыслями (фон, ошибки не критичны)
-            AutoLinker.linkAsync(ctx, n.id);
+            // Очистить временный WAV-файл — транскрипт сохранён, audioPath чистит markDone.
+            if (n.audioPath != null) {
+                try {
+                    java.io.File f = new java.io.File(n.audioPath);
+                    if (f.isFile()) f.delete();
+                } catch (Exception ignore) {}
+            }
+
+            // Side effects — каждый в своём try/catch, ошибки не роняют результат.
+            if (n.dueIso != null
+                    && ("reminder".equals(n.type) || "task".equals(n.type))) {
+                try {
+                    ReminderScheduler.schedule(ctx, n);
+                } catch (Throwable t) {
+                    Log.e(TAG, "reminder schedule failed for note " + n.id + ": " + t.getMessage(), t);
+                }
+            }
+            try {
+                AutoLinker.linkAsync(ctx, n.id);
+            } catch (Throwable t) {
+                Log.w(TAG, "autolinker failed for note " + n.id + ": " + t.getMessage());
+            }
 
             // Уведомить UI
             ctx.sendBroadcast(new Intent(RelayService.ACTION_NOTE_ADDED));
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
             String error = e.getMessage() != null ? e.getMessage() : String.valueOf(e);
             Log.e(TAG, "note " + n.id + " failed: " + error, e);
             store.markFailed(n.id, error);

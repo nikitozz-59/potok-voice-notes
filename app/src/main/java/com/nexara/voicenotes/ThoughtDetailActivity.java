@@ -6,6 +6,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
@@ -140,28 +141,42 @@ public class ThoughtDetailActivity extends Activity {
             fullText.setPadding(0, dp(8), 0, 0);
             thoughtCard.addView(fullText);
         }
+
+        // Чек-лист: настоящие тапаемые квадратики (item_checklist.xml).
+        // Раньше чек-лист показывался только текстом ☑/☐ в превью списка (joinItems),
+        // и в экране заметки квадратиков не было. Теперь — реальные CheckBox:
+        // тап сохраняет состояние done в БД (store.addOrUpdate), зачёркивает текст.
+        if ("list".equals(note.type) && note.items != null && !note.items.isEmpty()) {
+            LinearLayout checkList = new LinearLayout(this);
+            checkList.setOrientation(LinearLayout.VERTICAL);
+            checkList.setPadding(0, dp(12), 0, 0);
+            for (int i = 0; i < note.items.size(); i++) {
+                final int idx = i;
+                final CheckItem ci = note.items.get(i);
+                View row = getLayoutInflater().inflate(R.layout.item_checklist, checkList, false);
+                CheckBox cb = row.findViewById(R.id.checkDone);
+                TextView itemText = row.findViewById(R.id.checkText);
+                cb.setChecked(ci.done);
+                cb.setClickable(true);
+                itemText.setText(ci.text);
+                applyDoneStyle(itemText, ci.done);
+                cb.setOnCheckedChangeListener((btn, checked) -> {
+                    ci.done = checked;
+                    applyDoneStyle(itemText, checked);
+                    store.addOrUpdate(note);
+                });
+                checkList.addView(row);
+            }
+            thoughtCard.addView(checkList);
+        }
         root.addView(thoughtCard);
 
-        // Сетка действий 2×2 на белых плашках (макет панель 3)
+        // Кнопка «Связи» — единственное встроенное LLM-действие в экране заметки.
+        // Развить/Вопросы/Цепочка убраны: разбор через облачка-обработчики (ниже),
+        // эта часть переосмысляется. Связи оставлено — это поиск родственных заметок,
+        // функционально отдельный от «разбора одной мысли».
         if (llm != null) {
-            LinearLayout grid = new LinearLayout(this);
-            grid.setOrientation(LinearLayout.VERTICAL);
-            grid.setPadding(0, dp(14), 0, 0);
-
-            LinearLayout r1 = new LinearLayout(this);
-            r1.setOrientation(LinearLayout.HORIZONTAL);
-            r1.addView(makeActionCard("→  Развить", v -> doDevelop()), makeCardLp());
-            r1.addView(makeActionCard("≈  Вопросы", v -> doQuestions()), makeCardLp());
-            grid.addView(r1);
-
-            LinearLayout r2 = new LinearLayout(this);
-            r2.setOrientation(LinearLayout.HORIZONTAL);
-            r2.setPadding(0, dp(8), 0, 0);
-            r2.addView(makeActionCard("∞  Связи", v -> doFindLinks()), makeCardLp());
-            r2.addView(makeActionCard("≡  Цепочка", v -> doBuildChain()), makeCardLp());
-            grid.addView(r2);
-
-            root.addView(grid);
+            root.addView(makeButton("∞  Связи", v -> doFindLinks()));
         } else {
             TextView noLlm = new TextView(this);
             noLlm.setText("LLM не настроен — задайте ключ в Настройках");
@@ -226,27 +241,6 @@ public class ThoughtDetailActivity extends Activity {
         return "Заметка";
     }
 
-    private LinearLayout.LayoutParams makeCardLp() {
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(48), 1f);
-        lp.setMargins(dp(4), 0, dp(4), 0);
-        return lp;
-    }
-
-    private View makeActionCard(String title, View.OnClickListener l) {
-        TextView tv = new TextView(this);
-        tv.setText(title);
-        tv.setTextSize(14);
-        tv.setTextColor(ThemeManager.accent(this));
-        tv.setTypeface(null, android.graphics.Typeface.BOLD);
-        tv.setGravity(android.view.Gravity.CENTER);
-        android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
-        gd.setColor(0xFFFFFFFF);
-        gd.setCornerRadius(dp(14));
-        tv.setBackground(gd);
-        tv.setOnClickListener(l);
-        return tv;
-    }
-
     private Button makeButton(String text, View.OnClickListener listener) {
         Button btn = new Button(this);
         btn.setText(text);
@@ -265,7 +259,14 @@ public class ThoughtDetailActivity extends Activity {
         return btn;
     }
 
-    // === Развить ===
+    /** Стиль пункта чек-листа: выполненный — серый + зачёркнутый, невыполненный — обычный. */
+    private void applyDoneStyle(TextView tv, boolean done) {
+        tv.setTextColor(done ? 0xFF9E9E9E : 0xFF121212);
+        int flags = tv.getPaintFlags();
+        tv.setPaintFlags(done
+            ? flags | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
+            : flags & ~android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
+    }
 
     // === Облачка: пользовательские обработчики ===
 
@@ -323,28 +324,6 @@ public class ThoughtDetailActivity extends Activity {
         });
     }
 
-    private void doDevelop() {
-        runLlm("Развей эту мысль подробно. Добавь контекст, примеры, выводы. "
-            + "Напиши развёрнутый текст на русском, 3-5 предложений.\n\n"
-            + noteContext(), result -> {
-            long childId = store.createChildNote(note.id, result, makeSummary(result), "idea");
-            store.addLink(note.id, childId, "develops");
-            showResult("Развитие", result);
-            loadChildren();
-        });
-    }
-
-    // === Задать вопросы ===
-
-    private void doQuestions() {
-        runLlm("Задай 3-5 глубоких вопросов по этой мысли. "
-            + "Каждый вопрос с новой строки, без нумерации. "
-            + "Вопросы должны побуждать к размышлению.\n\n"
-            + noteContext(), result -> {
-            showResult("Вопросы", result);
-        });
-    }
-
     // === Найти связи ===
 
     private void doFindLinks() {
@@ -367,21 +346,6 @@ public class ThoughtDetailActivity extends Activity {
         }
         runLlm(sb.toString(), result -> {
             parseAndSaveLinks(result);
-        });
-    }
-
-    // === Собрать цепочку ===
-
-    private void doBuildChain() {
-        runLlm("Продолжи развитие этой мысли на один шаг вперёд. "
-            + "Напиши следующую мысль в цепочке (2-3 предложения). "
-            + "Логически вытекает из предыдущей.\n\n"
-            + noteContext(), result -> {
-            long childId = store.createChildNote(note.id, result, makeSummary(result), "idea", "llm", "chain");
-            store.addLink(note.id, childId, "develops");
-            showResult("Следующее звено цепочки", result);
-            loadChildren();
-            loadLinks();
         });
     }
 

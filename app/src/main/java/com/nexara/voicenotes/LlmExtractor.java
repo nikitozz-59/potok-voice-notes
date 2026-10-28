@@ -141,7 +141,69 @@ public class LlmExtractor {
                 s.raw = transcript;
             }
         }
+
+        // Fallback для чек-листа: LLM иногда отдаёт type=list, но items пустым
+        // (регрессия — «иконка list есть, а квадратиков нет»). Восстанавливаем
+        // пункты из самого транскрипта, разбивая по разделителям перечислений.
+        // Если восстановить не из чего — понижаем type, чтобы не показывать
+        // иконку списка без пунктов.
+        if ("list".equals(s.type) && (s.items == null || s.items.isEmpty())) {
+            java.util.List<String> parts = (transcript != null && !transcript.trim().isEmpty())
+                ? splitItems(transcript)
+                : java.util.Collections.emptyList();
+            if (parts.size() >= 2) {
+                s.items = parts;
+            } else if (parts.size() == 1) {
+                // Одно дело — это не список, понижаем до task.
+                s.type = "task";
+                s.items = null;
+            } else {
+                // Не удалось разбить — понижаем до note, квадратиков не будет.
+                s.type = "note";
+                s.items = null;
+            }
+        }
         return s;
+    }
+
+    /**
+     * Разбить транскрипт на пункты списка по разделителям перечислений.
+     * Используется как fallback, когда LLM вернул type=list, но пустой items.
+     *
+     * Разделители: новая строка, запятая, точка с запятой, союзы
+     * «и», «потом», «затем», «ещё», «после», «а также».
+     * Удаляет служебные префиксы («список дел:», «надо:», «купить:» и т.п.).
+     */
+    static java.util.List<String> splitItems(String transcript) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        if (transcript == null) return out;
+        // Нормализуем пробелы/табы (НЕ трогая newlines — они тоже разделители).
+        String t = transcript.trim().replaceAll("[ \t]+", " ");
+        t = t.replaceAll("\r\n", "\n").replaceAll("\r", "\n");
+        // Приводим разделители перечислений к \n.
+        t = t.replaceAll("\\s*,\\s*", "\n");
+        t = t.replaceAll("\\s*;\\s*", "\n");
+        t = t.replaceAll("(?iu)\\s+и\\s+", "\n");
+        t = t.replaceAll("(?iu)\\s+потом\\s+", "\n");
+        t = t.replaceAll("(?iu)\\s+затем\\s+", "\n");
+        t = t.replaceAll("(?iu)\\s+ещё\\s+", "\n");
+        t = t.replaceAll("(?iu)\\s+еще\\s+", "\n");
+        t = t.replaceAll("(?iu)\\s+после\\s+", "\n");
+        t = t.replaceAll("(?iu)\\s+а также\\s+", "\n");
+        String[] parts = t.split("\\n");
+        for (String p : parts) {
+            String v = p.trim();
+            if (v.isEmpty()) continue;
+            // Срезаем служебные префиксы: «список дел:», «надо:», «нужно:», «купить:», «планы:».
+            v = v.replaceFirst("(?iu)^\\s*(список\\s+дел|надо|нужно|купить|планы|задачи|список)\\s*[:\\-]\\s*", "");
+            v = v.replaceFirst("(?iu)^\\s*\\d+[.)]\\s*", "");  // «1.», «2)»
+            v = v.trim();
+            if (v.isEmpty() || v.length() < 2) continue;
+            // Заглавная первая буква.
+            v = Character.toUpperCase(v.charAt(0)) + v.substring(1);
+            out.add(v);
+        }
+        return out;
     }
 
     /**
@@ -183,8 +245,10 @@ public class LlmExtractor {
             + "- list — СПИСОК дел или покупок: перечислено два и более разных дела/покупок\n"
             + "- idea — идея, размышление, подумать\n"
             + "- note — всё остальное\n\n"
-            + "items — ТОЛЬКО когда type=list. Каждый пункт — отдельная короткая строка в повелительной форме.\n"
-            + "Разбивай перечисление на отдельные дела. Если дел одно или это не список — items: [].\n\n"
+            + "items — ОБЯЗАТЕЛЬНО для type=list: массив из 2+ пунктов. Никогда не возвращай type=list с items: [].\n"
+            + "Каждый пункт — отдельная короткая строка в повелительной форме («Купить хлеб», «Позвонить маме»).\n"
+            + "Разбивай перечисление на отдельные дела. Если дел одно — это type=task, не list.\n"
+            + "Если перечисления нет — выбери type=note/idea/task, items: [].\n\n"
             + "event_time_iso — это ВРЕМЯ САМОГО СОБЫТИЯ в локальном времени пользователя (БЕЗ смещения UTC):\n"
             + "- \"завтра в 16:00\" → завтра 16:00\n"
             + "- \"через 2 часа\" → сейчас + 2 часа\n"
@@ -208,6 +272,8 @@ public class LlmExtractor {
             + "Выход: {\"type\":\"task\",\"summary\":\"Купить хлеб\",\"event_title\":\"Купить хлеб\",\"event_time_iso\":null,\"remind_offset_min\":null,\"items\":[]}\n\n"
             + "Вход: Список дел: купить хлеб и молоко, позвонить маме, забрать посылку\n"
             + "Выход: {\"type\":\"list\",\"summary\":\"Список дел\",\"event_title\":\"Список дел\",\"event_time_iso\":null,\"remind_offset_min\":null,\"items\":[\"Купить хлеб\",\"Купить молоко\",\"Позвонить маме\",\"Забрать посылку\"]}\n\n"
+            + "Плохо (type=list, но items пустой — ТАК НЕЛЬЗЯ, пункты потеряны):\n"
+            + "Выход: {\"type\":\"list\",\"summary\":\"Список дел\",\"items\":[]}  ← никогда так\n\n"
             + "Вход: Идея сделать приложение для заметок\n"
             + "Выход: {\"type\":\"idea\",\"summary\":\"Приложение для заметок\",\"event_title\":\"Приложение для заметок\",\"event_time_iso\":null,\"remind_offset_min\":null,\"items\":[]}\n\n"
             + "Сейчас: " + todayLocal() + ". Время и даты считай в локальном часовом поясе пользователя.";
@@ -230,8 +296,8 @@ public class LlmExtractor {
             c.setRequestProperty("Authorization", "Bearer " + apiKey);
             c.setRequestProperty("Content-Type", "application/json; charset=utf-8");
             c.setRequestProperty("Accept", "application/json");
-            c.setConnectTimeout(15000);
-            c.setReadTimeout(60000);
+            c.setConnectTimeout(10000);
+            c.setReadTimeout(30000);
 
             String sys = "Перепиши голосовую заметку на русском языке в аккуратный текст.\n"
                 + "Убери слова-паразиты (эээ, ну, типа, значит), исправь грамматику и пунктуацию, "

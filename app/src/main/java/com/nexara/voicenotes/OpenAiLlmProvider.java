@@ -54,8 +54,8 @@ public class OpenAiLlmProvider implements LlmProvider {
             c.setRequestProperty("Authorization", "Bearer " + apiKey);
             c.setRequestProperty("Content-Type", "application/json; charset=utf-8");
             c.setRequestProperty("Accept", "application/json");
-            c.setConnectTimeout(15000);
-            c.setReadTimeout(60000);
+            c.setConnectTimeout(10000);
+            c.setReadTimeout(30000);
 
             String sys = LlmExtractor.buildSystemPrompt();
 

@@ -64,6 +64,9 @@ public class NotesDbHelper extends SQLiteOpenHelper {
     public static final String STATE_DONE = "done";
     public static final String STATE_FAILED = "failed";
 
+    /** Лимит попыток обработки; после него FAILED считается терминальной ошибкой. */
+    public static final int MAX_RETRIES = 5;
+
     public NotesDbHelper(Context ctx) {
         super(ctx, DB_NAME, null, DB_VERSION);
     }
