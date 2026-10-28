@@ -1,0 +1,18 @@
+{
+  "name": "voice-notes",
+  "version": "0.1.0",
+  "description": "Голосовые заметки: запись OPUS на часах → релей → Nexara → расшифровка",
+  "main": "app.js",
+  "private": true,
+  "scripts": {
+    "dev": "zeus dev",
+    "preview": "zeus preview",
+    "build": "zeus build"
+  },
+  "devDependencies": {
+    "@zeppos/device-types": "^3.0.0"
+  },
+  "dependencies": {
+    "@zeppos/zml": "^0.0.38"
+  }
+}

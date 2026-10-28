@@ -1,0 +1,54 @@
+{
+  "configVersion": "v3",
+  "app": {
+    "appId": 1131887,
+    "appName": "Поток",
+    "appType": "app",
+    "version": { "code": 40, "name": "0.4.0" },
+    "vender": "local",
+    "description": "Поток: голос → текст → задачи, календарь, списки",
+    "icon": "icon.png"
+  },
+  "permissions": ["device:os.mic", "device:os.bg_service"],
+  "runtime": {
+    "apiVersion": {
+      "minVersion": "3.0",
+      "target": "3.0",
+      "compatible": "3.0"
+    }
+  },
+  "targets": {
+    "amazfit-active": {
+      "module": {
+        "page": { "pages": ["page/index"] },
+        "secondary-widget": {
+          "widgets": [
+            {
+              "path": "widget/index",
+              "icon": "icon.png",
+              "preview": "preview.png",
+              "name": "Поток",
+              "runtime": { "type": "js" },
+              "i18n": {
+                "ru-RU": { "name": "Поток" },
+                "en-US": { "name": "Potok" }
+              }
+            }
+          ]
+        },
+        "app-side": { "path": "app-side/index" },
+        "app-service": { "services": ["app-service/index"] }
+      },
+      "platforms": [
+        { "name": "amazfit-active", "deviceSource": 8323328, "st": "s", "sr": "w390" },
+        { "name": "amazfit-active", "deviceSource": 8323329, "st": "s", "sr": "w390" }
+      ],
+      "designWidth": 390
+    }
+  },
+  "i18n": {
+    "ru-RU": { "appName": "Поток" },
+    "en-US": { "appName": "Potok" }
+  },
+  "defaultLanguage": "ru-RU"
+}

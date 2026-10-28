@@ -1,0 +1,10 @@
+# Zepp os build artifacts
+dist/
+node_modules/
+
+# zeus preview QR tokens — регенерируются `zeus preview`, не нужны в репо
+qr-*.txt
+qr-*.png
+
+# zeus cache
+.zepp/
