@@ -163,13 +163,13 @@ public class ProcessingQueue {
             try {
                 java.io.File wavFile = new java.io.File(n.audioPath);
                 if (!wavFile.isFile()) {
-                    store.markFailed(n.id, "audio file missing: " + n.audioPath);
+                    failNote(n.id, "audio file missing: " + n.audioPath);
                     ctx.sendBroadcast(new Intent(RelayService.ACTION_NOTE_ADDED));
                     return;
                 }
                 SttProvider stt = ProviderFactory.createSttProvider(ctx);
                 if (stt == null) {
-                    store.markFailed(n.id, "no STT key configured");
+                    failNote(n.id, "no STT key configured");
                     ctx.sendBroadcast(new Intent(RelayService.ACTION_NOTE_ADDED));
                     return;
                 }
@@ -186,14 +186,14 @@ public class ProcessingQueue {
                 // Throwable, не Exception — ловим OOM на длинной записи (readAllBytes WAV).
                 String error = e.getMessage() != null ? e.getMessage() : String.valueOf(e);
                 Log.e(TAG, "stt note " + n.id + " failed: " + error, e);
-                store.markFailed(n.id, "STT: " + error);
+                failNote(n.id, "STT: " + error);
                 ctx.sendBroadcast(new Intent(RelayService.ACTION_NOTE_ADDED));
                 return;
             }
         }
 
         if (transcript == null || transcript.isEmpty()) {
-            store.markFailed(n.id, "empty transcript");
+            failNote(n.id, "empty transcript");
             return;
         }
 
@@ -201,14 +201,14 @@ public class ProcessingQueue {
             // LLM extraction через провайдер
             LlmProvider llm = ProviderFactory.createLlmProvider(ctx);
             if (llm == null) {
-                store.markFailed(n.id, "no LLM key configured");
+                failNote(n.id, "no LLM key configured");
                 return;
             }
             LlmExtractor.Struct st = llm.extract(transcript);
 
             if (st == null || st.summary == null || st.summary.isEmpty()
                     || "(тишина)".equals(st.summary) || "(ошибка разбора)".equals(st.summary)) {
-                store.markFailed(n.id, "LLM returned empty/invalid: " + st.summary);
+                failNote(n.id, "LLM returned empty/invalid: " + st.summary);
                 return;
             }
 
@@ -261,8 +261,29 @@ public class ProcessingQueue {
         } catch (Throwable e) {
             String error = e.getMessage() != null ? e.getMessage() : String.valueOf(e);
             Log.e(TAG, "note " + n.id + " failed: " + error, e);
-            store.markFailed(n.id, error);
+            failNote(n.id, error);
             ctx.sendBroadcast(new Intent(RelayService.ACTION_NOTE_ADDED));
+        }
+    }
+
+    /**
+     * Классификация ошибки и соответствующий fail.
+     *
+     * Permanent (нет ключа, auth, файл ушёл, LLM мусор) → markTerminalFailed:
+     * retryCount сразу = MAX, ретраев не будет, часы видят «ОШИБКА» сразу,
+     * а не через ~18 мин backoff. Плюс экономия денег — не шлём 5× запрос,
+     * который никогда не succeed.
+     *
+     * Transient / unknown → markFailed: обычный retry с backoff. Unknown
+     * считаем transient (безопаснее ретраить, чем терять заметку).
+     */
+    private void failNote(long id, String error) {
+        if (RetryPolicy.isPermanent(error)) {
+            Log.i(TAG, "note " + id + " permanent error → terminal: " + error);
+            store.markTerminalFailed(id, error);
+        } else {
+            Log.i(TAG, "note " + id + " transient error → will retry: " + error);
+            store.markFailed(id, error);
         }
     }
 }

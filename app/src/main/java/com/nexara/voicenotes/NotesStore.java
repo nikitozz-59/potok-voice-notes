@@ -279,6 +279,16 @@ public class NotesStore {
     }
 
     /**
+     * Терминальная ошибка: retryCount сразу = MAX_RETRIES, ретраев не будет.
+     * Для permanent ошибок (нет ключа, auth fail, файл ушёл, LLM мусор) —
+     * повторная попытка не изменит результат, нет смысла ждать ~18 мин backoff.
+     * statusForState вернёт "error", часы покажут причину сразу.
+     */
+    public void markTerminalFailed(long id, String error) {
+        updateState(id, NotesDbHelper.STATE_FAILED, error, NotesDbHelper.MAX_RETRIES);
+    }
+
+    /**
      * Сбросить failed -> pending для retry.
      */
     public void resetToPending(long id) {

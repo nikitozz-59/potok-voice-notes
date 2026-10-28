@@ -105,8 +105,9 @@ public class RelayService extends Service {
                 return "{\"accepted\":true,\"id\":" + id + ",\"dedup\":true}";
             }
 
-            // WAV во временный файл — ProcessingQueue сделает STT асинхронно.
-            java.io.File wavFile = new java.io.File(getCacheDir(), "note_" + id + ".wav");
+            // WAV в filesDir/audio/ (не cacheDir — Android эвиктит cacheDir молча,
+            // и STT получит "audio file missing"). ProcessingQueue сделает STT асинхронно.
+            java.io.File wavFile = getAudioFile(id);
             java.nio.file.Files.write(wavFile.toPath(), wav);
 
             NotesStore.Note n = new NotesStore.Note();
@@ -178,6 +179,20 @@ public class RelayService extends Service {
             if (s >= 0 && e > s) return Long.parseLong(name.substring(s + 5, e));
         } catch (Exception e) {}
         return System.currentTimeMillis();
+    }
+
+    /**
+     * Папка для WAV-аудио с часов: filesDir/audio/ (не cacheDir).
+     *
+     * cacheDir эвиктится Android-ом молча при нехватке места — STT получал
+     * "audio file missing" на заметке, отправленной 5 минут назад. filesDir
+     * не эвиктится автоматически; CleaningQueue.processNote удаляет WAV после
+     * успешного STT, так что рост контролируемый.
+     */
+    private java.io.File getAudioFile(long id) {
+        java.io.File dir = new java.io.File(getFilesDir(), "audio");
+        if (!dir.isDirectory()) dir.mkdirs();
+        return new java.io.File(dir, "note_" + id + ".wav");
     }
 
     private void createChannel() {
