@@ -38,15 +38,6 @@
                 android:contentDescription="Только развитые" />
 
             <ImageButton
-                android:id="@+id/addTextBtn"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?android:attr/selectableItemBackground"
-                android:src="@android:drawable/ic_menu_add"
-                android:scaleType="centerInside"
-                android:contentDescription="Текстовая заметка" />
-
-            <ImageButton
                 android:id="@+id/searchBtn"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
@@ -133,6 +124,18 @@
                 android:visibility="gone" />
         </FrameLayout>
     </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/addTextBtn"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_gravity="bottom|end"
+                android:layout_marginRight="20dp"
+                android:layout_marginBottom="88dp"
+                android:background="@drawable/bg_fab"
+                android:src="@android:drawable/ic_menu_add"
+                android:scaleType="center"
+                android:contentDescription="Текстовая заметка" />
 
             <ImageButton
                 android:id="@+id/recFab"

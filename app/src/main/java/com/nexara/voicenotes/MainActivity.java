@@ -330,6 +330,8 @@ public class MainActivity extends Activity {
     private void applyTheme() {
         ThemeManager.applyToWindow(this);
         if (recFab != null) recFab.setBackground(ThemeManager.accentButton(this, 28));
+        ImageButton addTextBtn = findViewById(R.id.addTextBtn);
+        if (addTextBtn != null) addTextBtn.setBackground(ThemeManager.accentButton(this, 22));
         styleChips();
         styleDevToggle();
         if (syncBanner != null) {

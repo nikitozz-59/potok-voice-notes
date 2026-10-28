@@ -39,17 +39,17 @@ public class ProcessorCodecTest {
     @Test
     public void roundTripPreservesFields() {
         List<Processor> in = Arrays.asList(
-            new Processor(1, "Р¤РёРЅР°РЅР°Р»РёС‚РёРє", "С‚С‹ С„РёРЅР°РЅСЃРѕРІС‹Р№ Р°РЅР°Р»РёС‚РёРє"),
-            new Processor(2, "РљСЂРёС‚РёРє", "С‚С‹ СЃС‚СЂРѕРіРёР№ РєСЂРёС‚РёРє"));
+            new Processor(1, "Финаналитик", "ты финансовый аналитик"),
+            new Processor(2, "Критик", "ты строгий критик"));
         String json = ProcessorCodec.serialize(in);
         List<Processor> out = ProcessorCodec.deserialize(json);
 
         assertEquals(2, out.size());
         assertEquals(1, out.get(0).id);
-        assertEquals("Р¤РёРЅР°РЅР°Р»РёС‚РёРє", out.get(0).name);
-        assertEquals("С‚С‹ С„РёРЅР°РЅСЃРѕРІС‹Р№ Р°РЅР°Р»РёС‚РёРє", out.get(0).prompt);
+        assertEquals("Финаналитик", out.get(0).name);
+        assertEquals("ты финансовый аналитик", out.get(0).prompt);
         assertEquals(2, out.get(1).id);
-        assertEquals("РљСЂРёС‚РёРє", out.get(1).name);
+        assertEquals("Критик", out.get(1).name);
     }
 
     @Test
@@ -74,7 +74,7 @@ public class ProcessorCodecTest {
 
     @Test
     public void missingFieldsDefaultSafely() {
-        // РѕР±СЉРµРєС‚ Р±РµР· name/prompt РЅРµ РґРѕР»Р¶РµРЅ РІР°Р»РёС‚СЊ РїР°СЂСЃРµСЂ
+        // объект без name/prompt не должен валить парсер
         List<Processor> out = ProcessorCodec.deserialize("[{\"id\":7}]");
         assertEquals(1, out.size());
         assertEquals(7, out.get(0).id);
@@ -85,8 +85,8 @@ public class ProcessorCodecTest {
     @Test
     public void roundTripPreservesColor() {
         List<Processor> in = Arrays.asList(
-            new Processor(1, "РљСЂРёС‚РёРє", "x", 0xFFFF6D00),
-            new Processor(2, "РЎРїР°СЃРµСЂ", "y", 0));
+            new Processor(1, "Критик", "x", 0xFFFF6D00),
+            new Processor(2, "Спасер", "y", 0));
         List<Processor> out = ProcessorCodec.deserialize(ProcessorCodec.serialize(in));
         assertEquals(0xFFFF6D00, out.get(0).color);
         assertEquals(0, out.get(1).color); // default 0 для старых записей
@@ -113,18 +113,18 @@ public class ProcessorCodecTest {
     public void getByIdFindsMatch() {
         List<Processor> procs = ProcessorCodec.deserialize(
             ProcessorCodec.serialize(Arrays.asList(
-                new Processor(10, "Рђ", "x"),
-                new Processor(20, "Р‘", "y"))));
+                new Processor(10, "А", "x"),
+                new Processor(20, "Б", "y"))));
         Processor found = null;
         for (Processor p : procs) if (p.id == 20) found = p;
         assertNotNull(found);
-        assertEquals("Р‘", found.name);
+        assertEquals("Б", found.name);
     }
 
     @Test
     public void getByIdMissesCleanly() {
         List<Processor> procs = ProcessorCodec.deserialize(
-            ProcessorCodec.serialize(Arrays.asList(new Processor(10, "Рђ", "x"))));
+            ProcessorCodec.serialize(Arrays.asList(new Processor(10, "А", "x"))));
         Processor found = null;
         for (Processor p : procs) if (p.id == 999) found = p;
         assertNull(found);

@@ -37,7 +37,7 @@ public class SearchActivity extends Activity {
     private LinearLayout chipsRow;
     private int filterIdx = 0;
 
-    private static final String[] FILTER_NAMES = {"Р’СЃРµ", "РРґРµРё", "Р—Р°РґР°С‡Рё", "РЎРїРёСЃРєРё", "РќР°РїРѕРјРёРЅР°РЅРёСЏ", "Р—Р°РјРµС‚РєРё"};
+    private static final String[] FILTER_NAMES = {"Все", "Идеи", "Задачи", "Списки", "Напоминания", "Заметки"};
     private static final String[] FILTER_TYPES = {null, "idea", "task", "list", "reminder", "note"};
 
     @Override
