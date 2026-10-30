@@ -358,8 +358,11 @@ public class MainActivity extends Activity {
     }
 
     private void updateSyncBanner() {
+        // Индикатор по исключению: баннер виден только при проблеме или активной
+        // работе (отправка/обработка). Успех — норма, баннер скрыт.
+        // Во время записи индикатор — пилюля над FAB, баннер не дублирует.
         if (recording) {
-            syncBanner.setVisibility(View.VISIBLE);
+            syncBanner.setVisibility(View.GONE);
             return;
         }
         String k = prefs.getString("nexara_key", "");
@@ -784,6 +787,8 @@ public class MainActivity extends Activity {
         try { recorder.stop(); recorder.release(); recorder = null; } catch (Exception e) {}
 
         resetFabIdle();
+        // Баннер-индикатор: транскрипция — активная работа, показываем.
+        syncBanner.setVisibility(View.VISIBLE);
         syncText.setText("Распознавание…");
         syncIcon.setText("…");
         syncIcon.setTextColor(ThemeManager.accent(this));

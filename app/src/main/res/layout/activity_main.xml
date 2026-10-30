@@ -52,28 +52,27 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:background="@color/sync_bg"
-            android:padding="12dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginBottom="8dp"
-            android:gravity="center_vertical">
+            android:padding="@dimen/space_m"
+            android:layout_marginLeft="@dimen/space_l"
+            android:layout_marginRight="@dimen/space_l"
+            android:layout_marginBottom="@dimen/space_s"
+            android:gravity="center_vertical"
+            android:visibility="gone">
 
             <TextView
                 android:id="@+id/syncIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="@style/TextAppearance.Potok.Caption"
-                android:textColor="@color/cal_text"
-                android:text="✓" />
+                android:textColor="@color/cal_text" />
 
             <TextView
                 android:id="@+id/syncText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="8dp"
+                android:layout_marginLeft="@dimen/space_s"
                 android:textAppearance="@style/TextAppearance.Potok.Caption"
-                android:textColor="@color/sync_blue"
-                android:text="Синхронизировано" />
+                android:textColor="@color/sync_blue" />
         </LinearLayout>
 
         <HorizontalScrollView
