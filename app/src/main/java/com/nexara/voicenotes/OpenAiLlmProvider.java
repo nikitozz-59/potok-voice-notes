@@ -149,19 +149,29 @@ public class OpenAiLlmProvider implements LlmProvider {
             }
 
             JSONObject resp = new JSONObject(body);
-            JSONArray choices = resp.optJSONArray("choices");
-            if (choices == null || choices.length() == 0) {
-                throw new Exception("LLM: no choices in response");
-            }
-            String content = choices.getJSONObject(0).getJSONObject("message").optString("content", "");
-            if (content == null || content.trim().isEmpty()) {
-                throw new Exception("LLM returned empty chat response");
-            }
-            return content.trim();
+            return parseChatResponse(resp);
 
         } finally {
             if (c != null) c.disconnect();
         }
+    }
+
+    /**
+     * Пакетно-приватный парсер ответа /chat/completions → текст ответа.
+     * Вынесен из chat() ради юнит-тестирования без сети.
+     *
+     * @throws Exception если в ответе нет choices или пустой content
+     */
+    static String parseChatResponse(JSONObject resp) throws Exception {
+        JSONArray choices = resp.optJSONArray("choices");
+        if (choices == null || choices.length() == 0) {
+            throw new Exception("LLM: no choices in response");
+        }
+        String content = choices.getJSONObject(0).getJSONObject("message").optString("content", "");
+        if (content == null || content.trim().isEmpty()) {
+            throw new Exception("LLM returned empty chat response");
+        }
+        return content.trim();
     }
 
     private static byte[] readAll(InputStream is) throws Exception {

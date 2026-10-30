@@ -171,7 +171,7 @@ public class ChatActivity extends Activity {
 
         // Старт с seed: автоматический первый вопрос с контекстом
         if (seedText != null && !seedText.isEmpty()) {
-            history.add(ChatMessage.user("Есть заметка:\n«" + truncateCn(seedText, 600) + "»\n\nПомоги разобрать, развить или сформулировать на её основе идею."));
+            history.add(ChatMessage.user("Есть заметка:\n«" + ChatText.truncateCn(seedText, 600) + "»\n\nПомоги разобрать, развить или сформулировать на её основе идею."));
             addBubble("user", "Есть заметка — помоги разобрать её и развить идею.");
             send();
         } else {
@@ -231,7 +231,7 @@ public class ChatActivity extends Activity {
         final String answer = last;
         new AlertDialog.Builder(this)
             .setTitle("Зафиксировать как заметку?")
-            .setMessage("Последний ответ LLM будет разобран и сохранён:\n\n" + truncateCn(answer, 160))
+            .setMessage("Последний ответ LLM будет разобран и сохранён:\n\n" + ChatText.truncateCn(answer, 160))
             .setPositiveButton("Сохранить", (d, w) -> saveNote(answer))
             .setNegativeButton("Отмена", null)
             .show();
@@ -330,7 +330,7 @@ public class ChatActivity extends Activity {
             lp.setMargins(0, dp(4), dp(40), dp(4));
         }
         b.setLayoutParams(lp);
-        b.setText(wrapCn(text, 60));
+        b.setText(ChatText.wrapCn(text, 60));
         int idx = messagesLayout.indexOfChild(progressText);
         messagesLayout.addView(b, idx < 0 ? messagesLayout.getChildCount() : idx);
         scrollToBottom();
@@ -338,25 +338,6 @@ public class ChatActivity extends Activity {
 
     private void scrollToBottom() {
         scroll.post(() -> scroll.fullScroll(View.FOCUS_DOWN));
-    }
-
-    /** Перенос строки по слову, чтобы пузырь был компактным. */
-    private static String wrapCn(String s, int width) {
-        if (s == null) return "";
-        StringBuilder sb = new StringBuilder();
-        int line = 0;
-        for (char c : s.toCharArray()) {
-            if (c == '\n') { line = 0; sb.append('\n'); continue; }
-            sb.append(c);
-            line++;
-            if (line >= width) { sb.append('\n'); line = 0; }
-        }
-        return sb.toString();
-    }
-
-    private static String truncateCn(String s, int n) {
-        if (s == null) return "";
-        return s.length() <= n ? s : s.substring(0, n - 1) + "…";
     }
 
     private int dp(int v) {
