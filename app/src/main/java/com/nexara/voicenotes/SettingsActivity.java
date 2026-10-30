@@ -26,6 +26,8 @@ public class SettingsActivity extends Activity {
         setContentView(R.layout.activity_settings);
         prefs = getSharedPreferences("vn", MODE_PRIVATE);
 
+        findViewById(R.id.backBtn).setOnClickListener(v -> finish());
+
         keyInput = findViewById(R.id.keyInput);
         sttProviderInput = findViewById(R.id.sttProviderInput);
         sttBaseUrlInput = findViewById(R.id.sttBaseUrlInput);

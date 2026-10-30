@@ -1,201 +1,271 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Экран настроек. Раз-в-жизнь: ключи провайдеров.
+     Шапка с back-кнопкой, секции разделены отступами space_xl,
+     поля на поверхности potok_surface_secondary с радиусом s. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="@color/bg_app">
 
+    <!-- Шапка -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingLeft="@dimen/space_m"
+        android:paddingRight="@dimen/space_l"
+        android:paddingTop="@dimen/space_l"
+        android:paddingBottom="@dimen/space_m">
+
+        <ImageButton
+            android:id="@+id/backBtn"
+            android:layout_width="@dimen/touch_target"
+            android:layout_height="@dimen/touch_target"
+            android:background="?android:attr/selectableItemBackground"
+            android:src="@android:drawable/ic_menu_revert"
+            android:scaleType="centerInside"
+            android:contentDescription="Назад" />
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Nexara (STT)"
-            android:textAppearance="@style/TextAppearance.Potok.Title"
-            android:textColor="@color/primary"
-            android:paddingBottom="6dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="API-ключ Nexara хранится только на телефоне."
-            android:textAppearance="@style/TextAppearance.Potok.Caption"
-            android:textColor="@color/text_secondary"
-            android:paddingBottom="6dp" />
-
-        <EditText
-            android:id="@+id/keyInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/key_hint"
-            android:inputType="textVisiblePassword"
-            android:textAppearance="@style/TextAppearance.Potok.Body"
-            android:fontFamily="monospace" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:text="Альтернативный STT (OpenAI-совместимый Whisper)"
-            android:textAppearance="@style/TextAppearance.Potok.Title"
-            android:textColor="@color/primary" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Если Nexara недоступен — можно использовать Groq, OpenAI или другой Whisper-совместимый endpoint. Оставьте пустым для использования Nexara."
-            android:textAppearance="@style/TextAppearance.Potok.Caption"
-            android:textColor="@color/text_secondary"
-            android:paddingBottom="6dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Провайдер (nexara или openai)"
-            android:textAppearance="@style/TextAppearance.Potok.Caption" />
-
-        <EditText
-            android:id="@+id/sttProviderInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="nexara"
-            android:inputType="text"
-            android:textAppearance="@style/TextAppearance.Potok.Body" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Base URL (если openai)"
-            android:textAppearance="@style/TextAppearance.Potok.Caption" />
-
-        <EditText
-            android:id="@+id/sttBaseUrlInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="https://api.groq.com/openai/v1"
-            android:inputType="textUri"
-            android:textAppearance="@style/TextAppearance.Potok.Body" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Модель (если openai)"
-            android:textAppearance="@style/TextAppearance.Potok.Caption" />
-
-        <EditText
-            android:id="@+id/sttModelInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="whisper-large-v3"
-            android:inputType="text"
-            android:textAppearance="@style/TextAppearance.Potok.Body" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="API-ключ (если openai)"
-            android:textAppearance="@style/TextAppearance.Potok.Caption" />
-
-        <EditText
-            android:id="@+id/sttKeyInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint=""
-            android:inputType="textVisiblePassword"
-            android:textAppearance="@style/TextAppearance.Potok.Body"
-            android:fontFamily="monospace" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:text="LLM (ИИ-извлечение)"
-            android:textAppearance="@style/TextAppearance.Potok.Title"
-            android:textColor="@color/primary" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Для типизации заметки и извлечения даты напоминания."
-            android:textAppearance="@style/TextAppearance.Potok.Caption"
-            android:textColor="@color/text_secondary"
-            android:paddingBottom="6dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Base URL (OpenAI-совместимый)"
-            android:textAppearance="@style/TextAppearance.Potok.Caption" />
-
-        <EditText
-            android:id="@+id/llmBaseUrlInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="https://plusvibeapi.ru/v1"
-            android:inputType="textUri"
-            android:textAppearance="@style/TextAppearance.Potok.Body" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Модель"
-            android:textAppearance="@style/TextAppearance.Potok.Caption" />
-
-        <EditText
-            android:id="@+id/llmModelInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="z-ai/glm-5.2"
-            android:inputType="text"
-            android:textAppearance="@style/TextAppearance.Potok.Body" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="API-ключ"
-            android:textAppearance="@style/TextAppearance.Potok.Caption" />
-
-        <EditText
-            android:id="@+id/llmKeyInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint=""
-            android:inputType="textVisiblePassword"
-            android:textAppearance="@style/TextAppearance.Potok.Body"
-            android:fontFamily="monospace" />
-
-        <Button
-            android:id="@+id/processorsBtn"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:text="Обработчики"
-            android:background="@drawable/bg_chip"
-            android:textColor="@color/text_primary" />
-
-        <Button
-            android:id="@+id/saveBtn"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/save"
-            android:background="@color/primary"
-            android:textColor="#FFFFFF" />
-
-        <TextView
-            android:id="@+id/statusLine"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:textAppearance="@style/TextAppearance.Potok.Body"
-            android:textColor="@color/text_secondary" />
+            android:layout_weight="1"
+            android:layout_marginLeft="@dimen/space_s"
+            android:textAppearance="@style/TextAppearance.Potok.Headline"
+            android:textColor="@color/text_primary"
+            android:text="Настройки" />
     </LinearLayout>
-</ScrollView>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingLeft="@dimen/space_l"
+            android:paddingRight="@dimen/space_l"
+            android:paddingBottom="@dimen/space_xxl">
+
+            <!-- ============ STT ============ -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Распознавание речи (STT)"
+                android:textAppearance="@style/TextAppearance.Potok.Title"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="Ключ хранится только на телефоне. Nexara — основной, OpenAI-совместимый — запасной."
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
+                android:textColor="@color/text_secondary" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_m"
+                android:text="API-ключ Nexara"
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
+                android:textColor="@color/text_secondary" />
+
+            <EditText
+                android:id="@+id/keyInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:hint="@string/key_hint"
+                android:inputType="textVisiblePassword"
+                android:textAppearance="@style/TextAppearance.Potok.Body"
+                android:fontFamily="monospace"
+                android:background="@drawable/bg_field"
+                android:padding="@dimen/space_m" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_m"
+                android:text="Запасной провайдер (nexara или openai)"
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
+                android:textColor="@color/text_secondary" />
+
+            <EditText
+                android:id="@+id/sttProviderInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:hint="nexara"
+                android:inputType="text"
+                android:textAppearance="@style/TextAppearance.Potok.Body"
+                android:background="@drawable/bg_field"
+                android:padding="@dimen/space_m" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_m"
+                android:text="Base URL (если openai)"
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
+                android:textColor="@color/text_secondary" />
+
+            <EditText
+                android:id="@+id/sttBaseUrlInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:hint="https://api.groq.com/openai/v1"
+                android:inputType="textUri"
+                android:textAppearance="@style/TextAppearance.Potok.Body"
+                android:background="@drawable/bg_field"
+                android:padding="@dimen/space_m" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_m"
+                android:text="Модель (если openai)"
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
+                android:textColor="@color/text_secondary" />
+
+            <EditText
+                android:id="@+id/sttModelInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:hint="whisper-large-v3"
+                android:inputType="text"
+                android:textAppearance="@style/TextAppearance.Potok.Body"
+                android:background="@drawable/bg_field"
+                android:padding="@dimen/space_m" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_m"
+                android:text="API-ключ (если openai)"
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
+                android:textColor="@color/text_secondary" />
+
+            <EditText
+                android:id="@+id/sttKeyInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:inputType="textVisiblePassword"
+                android:textAppearance="@style/TextAppearance.Potok.Body"
+                android:fontFamily="monospace"
+                android:background="@drawable/bg_field"
+                android:padding="@dimen/space_m" />
+
+            <!-- ============ LLM ============ -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xl"
+                android:text="ИИ-извлечение (LLM)"
+                android:textAppearance="@style/TextAppearance.Potok.Title"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="Типизация заметки и извлечение даты напоминания. OpenAI-совместимый endpoint."
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
+                android:textColor="@color/text_secondary" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_m"
+                android:text="Base URL"
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
+                android:textColor="@color/text_secondary" />
+
+            <EditText
+                android:id="@+id/llmBaseUrlInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:hint="https://plusvibeapi.ru/v1"
+                android:inputType="textUri"
+                android:textAppearance="@style/TextAppearance.Potok.Body"
+                android:background="@drawable/bg_field"
+                android:padding="@dimen/space_m" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_m"
+                android:text="Модель"
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
+                android:textColor="@color/text_secondary" />
+
+            <EditText
+                android:id="@+id/llmModelInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:hint="z-ai/glm-5.2"
+                android:inputType="text"
+                android:textAppearance="@style/TextAppearance.Potok.Body"
+                android:background="@drawable/bg_field"
+                android:padding="@dimen/space_m" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_m"
+                android:text="API-ключ"
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
+                android:textColor="@color/text_secondary" />
+
+            <EditText
+                android:id="@+id/llmKeyInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:inputType="textVisiblePassword"
+                android:textAppearance="@style/TextAppearance.Potok.Body"
+                android:fontFamily="monospace"
+                android:background="@drawable/bg_field"
+                android:padding="@dimen/space_m" />
+
+            <!-- ============ Обработчики ============ -->
+            <Button
+                android:id="@+id/processorsBtn"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/touch_target"
+                android:layout_marginTop="@dimen/space_xl"
+                android:text="Обработчики (свои роли)"
+                android:background="@drawable/bg_btn_outlined"
+                android:textColor="@color/text_primary"
+                android:textAllCaps="false" />
+
+            <!-- ============ Сохранить ============ -->
+            <Button
+                android:id="@+id/saveBtn"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/touch_target"
+                android:layout_marginTop="@dimen/space_l"
+                android:text="@string/save"
+                android:background="@drawable/bg_btn_accent"
+                android:textColor="#FFFFFF"
+                android:textAllCaps="false" />
+
+            <TextView
+                android:id="@+id/statusLine"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_l"
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
