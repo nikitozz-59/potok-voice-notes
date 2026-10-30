@@ -78,7 +78,6 @@ public class MainActivity extends Activity {
     // Два веса строк: заметки с детьми/связями — крупные карточки
     private final java.util.HashMap<Long, int[]> devStats = new java.util.HashMap<>();
     private boolean developedOnly = false;
-    private ImageButton devToggle;
     private View syncBanner;
 
     /** Идентификатор виртуальной системной заметки (в БД не хранится). */
@@ -113,15 +112,13 @@ public class MainActivity extends Activity {
         emptyView = findViewById(R.id.empty);
         recFab = findViewById(R.id.recFab);
         cancelBtn = findViewById(R.id.cancelBtn);
-        devToggle = findViewById(R.id.devToggle);
         syncBanner = findViewById(R.id.syncBanner);
 
-        devToggle.setOnClickListener(v -> {
-            developedOnly = !developedOnly;
-            styleDevToggle();
-            applyFilter();
+        // Шапка: поиск + overflow (⋮). Чат, импорт, настройки, «только развитые» — в меню.
+        findViewById(R.id.searchBtn).setOnClickListener(v -> {
+            startActivity(new Intent(this, SearchActivity.class));
         });
-        styleDevToggle();
+        findViewById(R.id.overflowBtn).setOnClickListener(v -> showOverflow());
 
         buildChips();
 
@@ -149,32 +146,7 @@ public class MainActivity extends Activity {
             else startRecording();
         });
 
-        findViewById(R.id.searchBtn).setOnClickListener(v -> {
-            startActivity(new Intent(this, SearchActivity.class));
-        });
-
         findViewById(R.id.addTextBtn).setOnClickListener(v -> showTextNoteDialog());
-
-        // Чат с LLM — глобальная точка входа (v3.7).
-        findViewById(R.id.chatBtn).setOnClickListener(v -> {
-            if (ProviderFactory.createLlmProvider(this) != null) {
-                startActivity(new Intent(this, ChatActivity.class));
-            } else {
-                android.widget.Toast.makeText(this, "LLM не настроен", android.widget.Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        // Импорт / экспорт.
-        findViewById(R.id.importBtn).setOnClickListener(v -> {
-            new android.app.AlertDialog.Builder(this)
-                .setTitle("Импорт / экспорт")
-                .setItems(new String[]{"Импорт текст/MD из файла", "Восстановить из JSON", "Экспорт в JSON"}, (d, which) -> {
-                    if (which == 0) openFilePicker("text/plain", REQ_IMPORT_FILE);
-                    else if (which == 1) openFilePicker("application/json", REQ_IMPORT_JSON);
-                    else exportJson();
-                })
-                .show();
-        });
 
         cancelBtn.setOnClickListener(v -> {
             cancelRecording();
@@ -348,24 +320,12 @@ public class MainActivity extends Activity {
         dlg.show();
     }
 
-    private void styleDevToggle() {
-        if (developedOnly) {
-            devToggle.setBackground(ThemeManager.accentFill(this, 20));
-            devToggle.setColorFilter(ThemeManager.onAccent(this));
-        } else {
-            devToggle.setBackground(null);
-            devToggle.setColorFilter(0xFF555555);
-        }
-    }
-
-    /** Перекрасить всё, что задаётся темой. Вызывается в onCreate и onResume. */
     private void applyTheme() {
         ThemeManager.applyToWindow(this);
         if (recFab != null) recFab.setBackground(ThemeManager.accentButton(this, 28));
         ImageButton addTextBtn = findViewById(R.id.addTextBtn);
         if (addTextBtn != null) addTextBtn.setBackground(ThemeManager.accentButton(this, 22));
         styleChips();
-        styleDevToggle();
         if (syncBanner != null) {
             GradientDrawable sb = new GradientDrawable();
             sb.setShape(GradientDrawable.RECTANGLE);
@@ -554,6 +514,52 @@ public class MainActivity extends Activity {
 
             return conv;
         }
+    }
+
+    // ---------- overflow-меню шапки ----------
+
+    /** Меню ⋮: чат, ввод текстом, импорт/экспорт, настройки, «только развитые». */
+    private void showOverflow() {
+        android.widget.PopupMenu popup = new android.widget.PopupMenu(this, findViewById(R.id.overflowBtn));
+        popup.inflate(R.menu.main);
+        popup.getMenu().findItem(R.id.menu_developed).setChecked(developedOnly);
+        popup.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.menu_developed) {
+                developedOnly = !developedOnly;
+                applyFilter();
+                return true;
+            }
+            if (id == R.id.menu_chat) {
+                if (ProviderFactory.createLlmProvider(this) != null) {
+                    startActivity(new Intent(this, ChatActivity.class));
+                } else {
+                    android.widget.Toast.makeText(this, "LLM не настроен", android.widget.Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            }
+            if (id == R.id.menu_add_text) {
+                showTextNoteDialog();
+                return true;
+            }
+            if (id == R.id.menu_import) {
+                new android.app.AlertDialog.Builder(this)
+                    .setTitle("Импорт / экспорт")
+                    .setItems(new String[]{"Импорт текст/MD из файла", "Восстановить из JSON", "Экспорт в JSON"}, (d, which) -> {
+                        if (which == 0) openFilePicker("text/plain", REQ_IMPORT_FILE);
+                        else if (which == 1) openFilePicker("application/json", REQ_IMPORT_JSON);
+                        else exportJson();
+                    })
+                    .show();
+                return true;
+            }
+            if (id == R.id.menu_settings) {
+                startActivity(new Intent(this, SettingsActivity.class));
+                return true;
+            }
+            return false;
+        });
+        popup.show();
     }
 
     // ---------- bottom sheet: действия с заметкой ----------
