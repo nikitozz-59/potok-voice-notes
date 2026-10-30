@@ -53,7 +53,9 @@ public class MainActivity extends Activity {
     private ListView list;
     private TextView emptyView;
     private ImageButton recFab;
-    private Button cancelBtn;
+    private LinearLayout recPill;
+    private View recLevelDot;
+    private TextView recTimer;
 
     private SharedPreferences prefs;
     private NotesStore store;
@@ -111,7 +113,9 @@ public class MainActivity extends Activity {
         list = findViewById(R.id.notes);
         emptyView = findViewById(R.id.empty);
         recFab = findViewById(R.id.recFab);
-        cancelBtn = findViewById(R.id.cancelBtn);
+        recPill = findViewById(R.id.recPill);
+        recLevelDot = findViewById(R.id.recLevelDot);
+        recTimer = findViewById(R.id.recTimer);
         syncBanner = findViewById(R.id.syncBanner);
 
         // Шапка: поиск + overflow (⋮). Чат, импорт, настройки, «только развитые» — в меню.
@@ -146,10 +150,19 @@ public class MainActivity extends Activity {
             else startRecording();
         });
 
-        findViewById(R.id.addTextBtn).setOnClickListener(v -> showTextNoteDialog());
+        // Долгое нажатие на FAB: в покое — ручная текстовая заметка,
+        // при записи — отмена (раньше для этого была отдельная кнопка «Отмена»).
+        recFab.setOnLongClickListener(v -> {
+            if (recording) {
+                cancelRecording();
+            } else {
+                showTextNoteDialog();
+            }
+            return true;
+        });
 
-        cancelBtn.setOnClickListener(v -> {
-            cancelRecording();
+        recPill.setOnClickListener(v -> {
+            if (recording) stopRecording();
         });
 
         // Импорт через share-to-app: другойアプリ шарит текст → processTranscript.
@@ -167,9 +180,10 @@ public class MainActivity extends Activity {
             public void run() {
                 if (recording) {
                     long sec = (System.currentTimeMillis() - startTime) / 1000;
-                    syncText.setText(String.format(Locale.US, "● Запись %02d:%02d — тап для стоп", sec / 60, sec % 60));
-                    syncIcon.setText("●");
-                    syncIcon.setTextColor(ThemeManager.REC_GREEN);
+                    if (recTimer != null) {
+                        recTimer.setText(String.format(Locale.US, "%d:%02d", sec / 60, sec % 60));
+                    }
+                    pulseLevelDot();
                     timerHandler.postDelayed(this, 1000);
                 }
             }
@@ -322,9 +336,16 @@ public class MainActivity extends Activity {
 
     private void applyTheme() {
         ThemeManager.applyToWindow(this);
-        if (recFab != null) recFab.setBackground(ThemeManager.accentButton(this, 28));
-        ImageButton addTextBtn = findViewById(R.id.addTextBtn);
-        if (addTextBtn != null) addTextBtn.setBackground(ThemeManager.accentButton(this, 22));
+        // FAB красим акцентом темы только в покое — во время записи фон красный
+        // (зарезервированный stop_red), его тема не трогает.
+        if (recFab != null && !recording) recFab.setBackground(ThemeManager.accentButton(this, 28));
+        if (recPill != null) {
+            GradientDrawable pillBg = new GradientDrawable();
+            pillBg.setShape(GradientDrawable.RECTANGLE);
+            pillBg.setCornerRadius(20 * getResources().getDisplayMetrics().density);
+            pillBg.setColor(getResources().getColor(R.color.bg_card));
+            recPill.setBackground(pillBg);
+        }
         styleChips();
         if (syncBanner != null) {
             GradientDrawable sb = new GradientDrawable();
@@ -714,11 +735,40 @@ public class MainActivity extends Activity {
             startTime = System.currentTimeMillis();
             recFab.setImageResource(R.drawable.ic_stop);
             recFab.setBackgroundResource(R.drawable.bg_fab_rec);
-            cancelBtn.setVisibility(View.VISIBLE);
+            recTimer.setText("0:00");
+            recPill.setVisibility(View.VISIBLE);
             timerHandler.postDelayed(timerTick, 1000);
+            pulseLevelDot();
         } catch (Exception e) {
             recording = false;
             Toast.makeText(this, "Ошибка записи: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Масштабирует точку-индикатор по текущей амплитуде микрофона.
+     * Служит визуальной обратной связью «микрофон реально слышит» —
+     * единственный индикатор, видимый только во время записи.
+     */
+    private void pulseLevelDot() {
+        if (!recording || recorder == null || recLevelDot == null) return;
+        int amp;
+        try {
+            amp = recorder.getMaxAmplitude(); // 0..32767
+        } catch (Exception e) {
+            return;
+        }
+        // Логарифмическая шкала: тихий голос тоже виден.
+        float norm = amp <= 0 ? 0f : (float) (Math.log10(amp) / Math.log10(32767));
+        if (norm > 1f) norm = 1f;
+        // 8dp → 20dp. Масштаб в dp через плотность экрана.
+        float density = getResources().getDisplayMetrics().density;
+        int size = (int) ((8 + norm * 12) * density);
+        ViewGroup.LayoutParams lp = recLevelDot.getLayoutParams();
+        if (lp != null && lp.width != size) {
+            lp.width = size;
+            lp.height = size;
+            recLevelDot.setLayoutParams(lp);
         }
     }
 
@@ -728,9 +778,7 @@ public class MainActivity extends Activity {
         timerHandler.removeCallbacks(timerTick);
         try { recorder.stop(); recorder.release(); recorder = null; } catch (Exception e) {}
         if (recFile != null && recFile.exists()) recFile.delete();
-        recFab.setImageResource(R.drawable.ic_mic);
-        recFab.setBackgroundResource(R.drawable.bg_fab);
-        cancelBtn.setVisibility(View.GONE);
+        resetFabIdle();
         Toast.makeText(this, "Запись отменена", Toast.LENGTH_SHORT).show();
         updateSyncBanner();
     }
@@ -741,15 +789,20 @@ public class MainActivity extends Activity {
         timerHandler.removeCallbacks(timerTick);
         try { recorder.stop(); recorder.release(); recorder = null; } catch (Exception e) {}
 
-        recFab.setImageResource(R.drawable.ic_mic);
-        recFab.setBackgroundResource(R.drawable.bg_fab);
-        cancelBtn.setVisibility(View.GONE);
+        resetFabIdle();
         syncText.setText("Распознавание…");
         syncIcon.setText("…");
         syncIcon.setTextColor(ThemeManager.accent(this));
 
         final File f = recFile;
         new Thread(() -> transcribeAndSave(f)).start();
+    }
+
+    /** Возвращает FAB и пилюлю в состояние покоя — после стопа и после отмены. */
+    private void resetFabIdle() {
+        recFab.setImageResource(R.drawable.ic_mic);
+        recFab.setBackgroundResource(R.drawable.bg_fab);
+        if (recPill != null) recPill.setVisibility(View.GONE);
     }
 
     private void transcribeAndSave(File f) {

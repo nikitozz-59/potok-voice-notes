@@ -114,7 +114,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="🎤 Скажите заметку на часах\nили нажмите микрофон"
+                android:text="🎤 Нажмите микрофон\nили скажите на часах"
                 android:textAppearance="@style/TextAppearance.Potok.Title"
                 android:textColor="@color/text_secondary"
                 android:gravity="center"
@@ -123,18 +123,6 @@
                 android:visibility="gone" />
         </FrameLayout>
     </LinearLayout>
-
-            <ImageButton
-                android:id="@+id/addTextBtn"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:layout_gravity="bottom|end"
-                android:layout_marginRight="20dp"
-                android:layout_marginBottom="88dp"
-                android:background="@drawable/bg_fab"
-                android:src="@android:drawable/ic_menu_add"
-                android:scaleType="center"
-                android:contentDescription="Текстовая заметка" />
 
             <ImageButton
                 android:id="@+id/recFab"
@@ -147,14 +135,36 @@
                 android:scaleType="center"
                 android:contentDescription="Запись" />
 
-            <Button
-                android:id="@+id/cancelBtn"
+            <!-- Статус записи: единственный индикатор, видимый только пока идёт
+                 запись (индикатор по исключению). Точка-уровень 8dp + таймер. -->
+            <LinearLayout
+                android:id="@+id/recPill"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom|start"
-                android:layout_margin="20dp"
-                android:text="Отмена"
-                android:visibility="gone"
-                android:background="@drawable/bg_chip"
-                android:textColor="#FF1744" />
+                android:layout_height="40dp"
+                android:layout_gravity="bottom|end"
+                android:layout_marginRight="20dp"
+                android:layout_marginBottom="88dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_pill"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:elevation="2dp"
+                android:visibility="gone">
+
+                <View
+                    android:id="@+id/recLevelDot"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:background="@drawable/bg_dot_green" />
+
+                <TextView
+                    android:id="@+id/recTimer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="8dp"
+                    android:textAppearance="@style/TextAppearance.Potok.Body"
+                    android:textColor="@color/text_primary"
+                    android:text="0:00" />
+            </LinearLayout>
         </FrameLayout>
