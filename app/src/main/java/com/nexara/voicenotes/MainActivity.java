@@ -2,10 +2,7 @@ package com.nexara.voicenotes;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.BroadcastReceiver;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -19,7 +16,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -138,12 +134,8 @@ public class MainActivity extends Activity {
             i.putExtra("note_id", n.id);
             startActivity(i);
         });
-        list.setOnItemLongClickListener((p, v, pos, id) -> {
-            NotesStore.Note n = visibleNotes.get(pos);
-            if (n.system) return true; // системную не удалить и не редактировать
-            showNoteActions(n);
-            return true;
-        });
+        // Долгое нажатие больше не открывает шторку — действия в едином экране
+        // заметки (тап). Long-press убран, чтобы не было двух путей к одному.
 
         recFab.setOnClickListener(v -> {
             if (recording) stopRecording();
@@ -578,100 +570,6 @@ public class MainActivity extends Activity {
             return false;
         });
         popup.show();
-    }
-
-    // ---------- bottom sheet: действия с заметкой ----------
-
-    private void showNoteActions(final NotesStore.Note n) {
-        final Dialog dlg = new Dialog(this);
-        dlg.setContentView(R.layout.dialog_note_actions);
-        if (dlg.getWindow() != null) {
-            dlg.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-            dlg.getWindow().setGravity(Gravity.BOTTOM);
-            dlg.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-            dlg.setCanceledOnTouchOutside(true);
-        }
-
-        String title = (n.summary != null && !n.summary.isEmpty()) ? n.summary
-            : ((n.text != null && !n.text.isEmpty()) ? n.text : "Заметка");
-        if (title.length() > 70) title = title.substring(0, 70) + "…";
-
-        // Смахнуть шторку вниз: тянем за ручку, заголовок или пустое место
-        final float[] startY = new float[1];
-        View.OnTouchListener swipeDown = (v, ev) -> {
-            switch (ev.getAction()) {
-                case android.view.MotionEvent.ACTION_DOWN:
-                    startY[0] = ev.getRawY();
-                    return true;
-                case android.view.MotionEvent.ACTION_MOVE:
-                    float dy = ev.getRawY() - startY[0];
-                    if (dy > 40 * getResources().getDisplayMetrics().density) {
-                        dlg.dismiss();
-                        return true;
-                    }
-                    return true;
-            }
-            return false;
-        };
-        View handle = dlg.findViewById(R.id.sheetHandle);
-        if (handle != null) handle.setOnTouchListener(swipeDown);
-        TextView titleV = dlg.findViewById(R.id.sheetTitle);
-        titleV.setText(title);
-        titleV.setOnTouchListener(swipeDown);
-
-        LinearLayout box = dlg.findViewById(R.id.sheetActions);
-        addSheetRow(box, "📋 Копировать текст", 0xFF333333, v -> {
-            ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-            String txt = (n.text != null && !n.text.isEmpty()) ? n.text : (n.summary != null ? n.summary : "");
-            cm.setPrimaryClip(ClipData.newPlainText("potok", txt));
-            Toast.makeText(this, "Скопировано", Toast.LENGTH_SHORT).show();
-            dlg.dismiss();
-        });
-        addSheetRow(box, "✏️ Редактировать", 0xFF333333, v -> {
-            Intent i = new Intent(this, EditNoteActivity.class);
-            i.putExtra("id", n.id);
-            startActivity(i);
-            dlg.dismiss();
-        });
-        addSheetRow(box, "➕ Дополнить мысль", 0xFF333333, v -> {
-            dlg.dismiss();
-            showAddDialog(n);
-        });
-        addSheetRow(box, "🔬 Разобрать", 0xFF333333, v -> {
-            Intent i = new Intent(this, ThoughtDetailActivity.class);
-            i.putExtra("note_id", n.id);
-            startActivity(i);
-            dlg.dismiss();
-        });
-        addSheetRow(box, "🗑 Удалить", 0xFFD32F2F, v -> {
-            dlg.dismiss();
-            new android.app.AlertDialog.Builder(this)
-                .setMessage("Удалить заметку?")
-                .setPositiveButton("Удалить", (dd, w) -> {
-                    ReminderScheduler.cancel(this, n.id);
-                    store.delete(n.id);
-                    refresh();
-                    updateSyncBanner();
-                })
-                .setNegativeButton("Отмена", null)
-                .show();
-        });
-
-        dlg.show();
-    }
-
-    private void addSheetRow(LinearLayout box, String text, int color, View.OnClickListener l) {
-        TextView row = new TextView(this);
-        row.setText(text);
-        row.setTextAppearance(this, R.style.TextAppearance_Potok_Body);
-        row.setTextColor(color);
-        float density = getResources().getDisplayMetrics().density;
-        row.setPadding((int) (20 * density), (int) (13 * density),
-            (int) (20 * density), (int) (13 * density));
-        row.setBackground(getDrawable(android.R.drawable.list_selector_background));
-        row.setOnClickListener(l);
-        box.addView(row);
     }
 
     // ---------- дополнить мысль своим текстом ----------

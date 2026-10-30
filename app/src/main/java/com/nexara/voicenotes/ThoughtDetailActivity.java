@@ -22,9 +22,11 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Экран работы с мыслью: развей, задай вопросы, найди связи, собери цепочку.
+ * Единый экран заметки: содержимое, действия, разбор.
  *
- * Открывается по кнопке "Разобрать" из карточки заметки.
+ * Объединяет бывшую шторку действий (копировать/редактировать/удалить) и
+ * бывший экран «Разобрать» (связи, цепочка, облачка-обработчики, чат).
+ * Открывается тапом по заметке из списка.
  * Использует LlmProvider для LLM-вызовов, NotesStore для связей и дочерних мыслей.
  */
 public class ThoughtDetailActivity extends Activity {
@@ -79,10 +81,9 @@ public class ThoughtDetailActivity extends Activity {
         header.addView(back);
 
         TextView hTitle = new TextView(this);
-        hTitle.setText("Разобрать мысль");
+        hTitle.setText("Заметка");
         hTitle.setTextAppearance(this, R.style.TextAppearance_Potok_Headline);
         hTitle.setTextColor(0xFF121212);
-        hTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         header.addView(hTitle);
         root.addView(header);
 
@@ -102,7 +103,6 @@ public class ThoughtDetailActivity extends Activity {
         metaView.setText(typeName + " · " + timeStr);
         metaView.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
         metaView.setTextColor(ThemeManager.accent(this));
-        metaView.setTypeface(null, android.graphics.Typeface.BOLD);
         thoughtCard.addView(metaView);
 
         // Чип времени события — для заметок с dueIso (is_event).
@@ -117,7 +117,6 @@ public class ThoughtDetailActivity extends Activity {
                 eventChip.setText(chip);
                 eventChip.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
                 eventChip.setTextColor(0xFF2C6FE8);
-                eventChip.setTypeface(null, android.graphics.Typeface.BOLD);
                 eventChip.setPadding(0, dp(6), 0, 0);
                 thoughtCard.addView(eventChip);
             } catch (Exception e) { /* плохая дата — не показываем чип */ }
@@ -170,6 +169,44 @@ public class ThoughtDetailActivity extends Activity {
             thoughtCard.addView(checkList);
         }
         root.addView(thoughtCard);
+
+        // Действия с заметкой — раньше были в отдельной шторке (showNoteActions),
+        // теперь в едином экране. Три управления + «Дополнить» ниже.
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams aLp = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        aLp.setMargins(0, dp(12), 0, 0);
+        actions.setLayoutParams(aLp);
+
+        actions.addView(makeTextAction("📋 Копировать", v -> {
+            String txt = (note.text != null && !note.text.isEmpty()) ? note.text
+                : (note.summary != null ? note.summary : "");
+            android.content.ClipboardManager cm = (android.content.ClipboardManager)
+                getSystemService(CLIPBOARD_SERVICE);
+            cm.setPrimaryClip(android.content.ClipData.newPlainText("potok", txt));
+            Toast.makeText(this, "Скопировано", Toast.LENGTH_SHORT).show();
+        }));
+
+        actions.addView(makeTextAction("✏️ Редактировать", v -> {
+            Intent i = new Intent(this, EditNoteActivity.class);
+            i.putExtra("id", note.id);
+            startActivity(i);
+        }));
+
+        actions.addView(makeTextAction("🗑 Удалить", 0xFFFF1744, v -> {
+            new android.app.AlertDialog.Builder(this)
+                .setMessage("Удалить заметку?")
+                .setPositiveButton("Удалить", (dd, w) -> {
+                    ReminderScheduler.cancel(this, note.id);
+                    store.delete(note.id);
+                    finish();
+                })
+                .setNegativeButton("Отмена", null)
+                .show();
+        }));
+        root.addView(actions);
 
         // Кнопка «Связи» — единственное встроенное LLM-действие в экране заметки.
         // Развить/Вопросы/Цепочка убраны: разбор через облачка-обработчики (ниже),
@@ -224,7 +261,6 @@ public class ThoughtDetailActivity extends Activity {
         linksTitle.setText("Связи");
         linksTitle.setTextAppearance(this, R.style.TextAppearance_Potok_Title);
         linksTitle.setTextColor(ThemeManager.accent(this));
-        linksTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         linksTitle.setPadding(0, dp(20), 0, dp(8));
         root.addView(linksTitle);
 
@@ -237,7 +273,6 @@ public class ThoughtDetailActivity extends Activity {
         childrenTitle.setText("Цепочка мыслей");
         childrenTitle.setTextAppearance(this, R.style.TextAppearance_Potok_Title);
         childrenTitle.setTextColor(ThemeManager.accent(this));
-        childrenTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         childrenTitle.setPadding(0, dp(20), 0, dp(8));
         root.addView(childrenTitle);
 
@@ -255,6 +290,26 @@ public class ThoughtDetailActivity extends Activity {
         if ("reminder".equals(t)) return "Напоминание";
         if ("idea".equals(t)) return "Идея";
         return "Заметка";
+    }
+
+    /** Компактная кнопка-действие в ряду (Копировать/Редактировать/Удалить).
+     *  В отличие от полноразмерной makeButton — вес 1, меньше высота, нет рамки. */
+    private TextView makeTextAction(String text, View.OnClickListener listener) {
+        return makeTextAction(text, ThemeManager.accent(this), listener);
+    }
+
+    private TextView makeTextAction(String text, int color, View.OnClickListener listener) {
+        TextView tv = new TextView(this);
+        tv.setText(text);
+        tv.setTextAppearance(this, R.style.TextAppearance_Potok_Body);
+        tv.setTextColor(color);
+        tv.setPadding(dp(12), dp(10), dp(12), dp(10));
+        tv.setBackground(getDrawable(android.R.drawable.list_selector_background));
+        tv.setOnClickListener(listener);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+            0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        tv.setLayoutParams(lp);
+        return tv;
     }
 
     private Button makeButton(String text, View.OnClickListener listener) {
