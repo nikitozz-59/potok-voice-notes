@@ -62,7 +62,7 @@ public class RecordWidgetProvider extends AppWidgetProvider {
                         ? last.summary
                         : ((last.text != null && !last.text.isEmpty()) ? last.text : "Заметка");
                 if (title.length() > 30) title = title.substring(0, 30) + "…";
-                views.setTextViewText(R.id.widgetTitle, MainActivity.typeIcon(last.type) + " " + title);
+                views.setTextViewText(R.id.widgetTitle, MainActivity.typeIconEmoji(last.type) + " " + title);
                 views.setTextViewText(R.id.widgetSub, "Тап для записи");
             } else {
                 views.setTextViewText(R.id.widgetTitle, "Поток");

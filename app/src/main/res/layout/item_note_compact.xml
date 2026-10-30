@@ -11,13 +11,14 @@
     android:paddingBottom="@dimen/space_s"
     android:gravity="center_vertical">
 
-    <TextView
+    <ImageView
         android:id="@+id/icon"
         android:layout_width="24dp"
         android:layout_height="24dp"
-        android:gravity="center"
-        android:textAppearance="@style/TextAppearance.Potok.Body"
-        android:text="•" />
+        android:src="@drawable/ic_type_note"
+        android:tint="@color/text_secondary"
+        android:scaleType="centerInside"
+        android:contentDescription="Тип заметки" />
 
     <TextView
         android:id="@+id/title"

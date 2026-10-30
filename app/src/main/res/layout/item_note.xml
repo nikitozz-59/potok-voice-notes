@@ -12,15 +12,16 @@
     android:paddingBottom="@dimen/space_m"
     android:gravity="top">
 
-    <!-- Иконка-тип: только emoji, без подложки. Колонка фиксированной ширины
-         для выравнивания заголовков по одной линии. -->
-    <TextView
+    <!-- Иконка-тип: векторная, монохромная, tint text_secondary.
+         Тип кодируется формой иконки, не цветом — лаконично. -->
+    <ImageView
         android:id="@+id/icon"
         android:layout_width="28dp"
         android:layout_height="28dp"
-        android:gravity="center"
-        android:textAppearance="@style/TextAppearance.Potok.Title"
-        android:text="•" />
+        android:src="@drawable/ic_type_note"
+        android:tint="@color/text_secondary"
+        android:scaleType="centerInside"
+        android:contentDescription="Тип заметки" />
 
     <LinearLayout
         android:layout_width="0dp"

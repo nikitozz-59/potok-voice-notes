@@ -53,10 +53,10 @@ public class ProcessorsActivity extends Activity {
         header.setGravity(Gravity.CENTER_VERTICAL);
         header.setPadding(0, 0, 0, dp(14));
 
-        TextView back = new TextView(this);
-        back.setText("‹");
-        back.setTextSize(32); // glyph-стрелка навигации, не текст — вне типошкалы
-        back.setTextColor(ThemeManager.TEXT_PRIMARY);
+        ImageButton back = new ImageButton(this);
+        back.setImageResource(R.drawable.ic_back);
+        back.setColorFilter(ThemeManager.TEXT_PRIMARY);
+        back.setBackground(getDrawable(android.R.drawable.list_selector_background));
         back.setPadding(0, 0, dp(12), 0);
         back.setOnClickListener(v -> finish());
         header.addView(back);
@@ -163,7 +163,7 @@ public class ProcessorsActivity extends Activity {
         row.addView(name);
 
         ImageButton del = new ImageButton(this);
-        del.setImageResource(android.R.drawable.ic_menu_delete);
+        del.setImageResource(R.drawable.ic_delete);
         del.setBackground(null);
         del.setColorFilter(ThemeManager.STOP_RED);
         del.setOnClickListener(v -> new AlertDialog.Builder(this)

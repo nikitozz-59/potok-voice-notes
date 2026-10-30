@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
@@ -66,16 +68,16 @@ public class ThoughtDetailActivity extends Activity {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(16), dp(16), dp(16), dp(32));
 
-        // Шапка: кнопка назад + «Разобрать мысль» как в макете
+        // Шапка: кнопка назад (векторная) + «Заметка»
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(android.view.Gravity.CENTER_VERTICAL);
         header.setPadding(0, 0, 0, dp(14));
 
-        TextView back = new TextView(this);
-        back.setText("‹");
-        back.setTextSize(32); // glyph-стрелка навигации, не текст — вне типошкалы
-        back.setTextColor(0xFF121212);
+        ImageButton back = new ImageButton(this);
+        back.setImageResource(R.drawable.ic_back);
+        back.setColorFilter(ThemeManager.TEXT_PRIMARY);
+        back.setBackground(getDrawable(android.R.drawable.list_selector_background));
         back.setPadding(0, 0, dp(12), 0);
         back.setOnClickListener(v -> finish());
         header.addView(back);
@@ -83,7 +85,7 @@ public class ThoughtDetailActivity extends Activity {
         TextView hTitle = new TextView(this);
         hTitle.setText("Заметка");
         hTitle.setTextAppearance(this, R.style.TextAppearance_Potok_Headline);
-        hTitle.setTextColor(0xFF121212);
+        hTitle.setTextColor(ThemeManager.TEXT_PRIMARY);
         header.addView(hTitle);
         root.addView(header);
 
@@ -170,8 +172,7 @@ public class ThoughtDetailActivity extends Activity {
         }
         root.addView(thoughtCard);
 
-        // Действия с заметкой — раньше были в отдельной шторке (showNoteActions),
-        // теперь в едином экране. Три управления + «Дополнить» ниже.
+        // Быстрые действия: три круглые иконки-кнопки. Понятны без текста.
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
         actions.setGravity(android.view.Gravity.CENTER_VERTICAL);
@@ -180,7 +181,7 @@ public class ThoughtDetailActivity extends Activity {
         aLp.setMargins(0, dp(12), 0, 0);
         actions.setLayoutParams(aLp);
 
-        actions.addView(makeTextAction("📋 Копировать", v -> {
+        actions.addView(makeIconButton(R.drawable.ic_copy, v -> {
             String txt = (note.text != null && !note.text.isEmpty()) ? note.text
                 : (note.summary != null ? note.summary : "");
             android.content.ClipboardManager cm = (android.content.ClipboardManager)
@@ -188,14 +189,18 @@ public class ThoughtDetailActivity extends Activity {
             cm.setPrimaryClip(android.content.ClipData.newPlainText("potok", txt));
             Toast.makeText(this, "Скопировано", Toast.LENGTH_SHORT).show();
         }));
+        // Зазор между иконками
+        actions.addView(spacer(dp(8)));
 
-        actions.addView(makeTextAction("✏️ Редактировать", v -> {
+        actions.addView(makeIconButton(R.drawable.ic_edit, v -> {
             Intent i = new Intent(this, EditNoteActivity.class);
             i.putExtra("id", note.id);
             startActivity(i);
         }));
+        actions.addView(spacer(dp(8)));
 
-        actions.addView(makeTextAction("🗑 Удалить", getResources().getColor(R.color.destructive), v -> {
+        actions.addView(makeIconButton(R.drawable.ic_delete,
+            getResources().getColor(R.color.destructive), v -> {
             new android.app.AlertDialog.Builder(this)
                 .setMessage("Удалить заметку?")
                 .setPositiveButton("Удалить", (dd, w) -> {
@@ -208,12 +213,17 @@ public class ThoughtDetailActivity extends Activity {
         }));
         root.addView(actions);
 
-        // Кнопка «Связи» — единственное встроенное LLM-действие в экране заметки.
-        // Развить/Вопросы/Цепочка убраны: разбор через облачка-обработчики (ниже),
-        // эта часть переосмысляется. Связи оставлено — это поиск родственных заметок,
-        // функционально отдельный от «разбора одной мысли».
+        // LLM-действия: компактные pill-кнопки с иконкой + подписью.
+        // Сетка 2×2 — не во всю ширину, экономят вертикальное место.
+        LinearLayout pillsRow1 = new LinearLayout(this);
+        pillsRow1.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams p1Lp = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        p1Lp.setMargins(0, dp(12), 0, 0);
+        pillsRow1.setLayoutParams(p1Lp);
+
         if (llm != null) {
-            root.addView(makeButton("∞  Связи", v -> doFindLinks()));
+            pillsRow1.addView(makePillButton(R.drawable.ic_links, "Связи", v -> doFindLinks()));
         } else {
             TextView noLlm = new TextView(this);
             noLlm.setText("LLM не настроен — задайте ключ в Настройках");
@@ -221,26 +231,26 @@ public class ThoughtDetailActivity extends Activity {
             noLlm.setPadding(0, dp(12), 0, dp(4));
             root.addView(noLlm);
         }
+        pillsRow1.addView(makePillButton(R.drawable.ic_add, "Дополнить", v -> showAddInput()));
+        root.addView(pillsRow1);
 
-        // Кнопка «Дополнить мысль» (контурная белая)
-        Button addBtn = makeButton("➕  Дополнить своим", v -> showAddInput());
-        root.addView(addBtn);
+        LinearLayout pillsRow2 = new LinearLayout(this);
+        pillsRow2.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams p2Lp = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        p2Lp.setMargins(0, dp(8), 0, 0);
+        pillsRow2.setLayoutParams(p2Lp);
 
-        // Поделиться заметкой — Android share sheet (ACTION_SEND, plain text).
-        Button shareBtn = makeButton("↗  Поделиться", v -> shareNote());
-        root.addView(shareBtn);
-
-        // Обсудить с LLM — отдельный чат, стартует с контекстом этой заметки.
-        // (entry point для ChatActivity, v3.7.)
+        pillsRow2.addView(makePillButton(R.drawable.ic_share, "Поделиться", v -> shareNote()));
         if (llm != null) {
-            Button chatBtn = makeButton("💬  Обсудить", v -> {
+            pillsRow2.addView(makePillButton(R.drawable.ic_chat, "Обсудить", v -> {
                 Intent i = new Intent(this, ChatActivity.class);
                 i.putExtra("seed_text", note.text != null ? note.text : note.summary);
                 i.putExtra("seed_summary", note.summary);
                 startActivity(i);
-            });
-            root.addView(chatBtn);
+            }));
         }
+        root.addView(pillsRow2);
 
         // Облачка — пользовательские обработчики (LLM-роли).
         // Создаются в Настройках → Обработчики. Тап по облачку — разбор через эту роль.
@@ -292,41 +302,66 @@ public class ThoughtDetailActivity extends Activity {
         return "Заметка";
     }
 
-    /** Компактная кнопка-действие в ряду (Копировать/Редактировать/Удалить).
-     *  В отличие от полноразмерной makeButton — вес 1, меньше высота, нет рамки. */
-    private TextView makeTextAction(String text, View.OnClickListener listener) {
-        return makeTextAction(text, ThemeManager.accent(this), listener);
+    /** Круглая иконка-кнопка действия (копировать/редактировать/удалить).
+     *  40dp, фон bg_icon_circle, иконка 20dp. Понятна без текста. */
+    private ImageButton makeIconButton(int iconRes, View.OnClickListener listener) {
+        return makeIconButton(iconRes, ThemeManager.TEXT_PRIMARY, listener);
     }
 
-    private TextView makeTextAction(String text, int color, View.OnClickListener listener) {
-        TextView tv = new TextView(this);
-        tv.setText(text);
-        tv.setTextAppearance(this, R.style.TextAppearance_Potok_Body);
-        tv.setTextColor(color);
-        tv.setPadding(dp(12), dp(10), dp(12), dp(10));
-        tv.setBackground(getDrawable(android.R.drawable.list_selector_background));
-        tv.setOnClickListener(listener);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-            0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        tv.setLayoutParams(lp);
-        return tv;
-    }
-
-    private Button makeButton(String text, View.OnClickListener listener) {
-        Button btn = new Button(this);
-        btn.setText(text);
-        btn.setTextAppearance(this, R.style.TextAppearance_Potok_Title);
-        btn.setTextColor(ThemeManager.accent(this));
-        android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
-        gd.setColor(0xFFFFFFFF);
-        gd.setCornerRadius(dp(14));
-        btn.setBackground(gd);
+    private ImageButton makeIconButton(int iconRes, int iconColor, View.OnClickListener listener) {
+        ImageButton btn = new ImageButton(this);
+        btn.setImageResource(iconRes);
+        btn.setColorFilter(iconColor);
+        btn.setBackground(getDrawable(R.drawable.bg_icon_circle));
         btn.setOnClickListener(listener);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, dp(46));
-        lp.setMargins(0, dp(12), 0, 0);
+        int size = dp(40);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(size, size);
         btn.setLayoutParams(lp);
         return btn;
+    }
+
+    /** Компактная pill-кнопка с иконкой + подписью. Высота 40dp, вес 1,
+     *  скруглённый фон. Не во всю ширину — по две в ряд (сетка 2×2). */
+    private LinearLayout makePillButton(int iconRes, String label, View.OnClickListener listener) {
+        LinearLayout pill = new LinearLayout(this);
+        pill.setOrientation(LinearLayout.HORIZONTAL);
+        pill.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        pill.setPadding(dp(14), dp(10), dp(14), dp(10));
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setColor(getResources().getColor(R.color.bg_card));
+        bg.setCornerRadius(dp(20));
+        pill.setBackground(bg);
+        pill.setOnClickListener(listener);
+
+        ImageView icon = new ImageView(this);
+        icon.setImageResource(iconRes);
+        icon.setColorFilter(ThemeManager.accent(this));
+        LinearLayout.LayoutParams iconLp = new LinearLayout.LayoutParams(dp(20), dp(20));
+        icon.setLayoutParams(iconLp);
+        pill.addView(icon);
+
+        TextView text = new TextView(this);
+        text.setText(label);
+        text.setTextAppearance(this, R.style.TextAppearance_Potok_Body);
+        text.setTextColor(ThemeManager.TEXT_PRIMARY);
+        LinearLayout.LayoutParams textLp = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        textLp.setMargins(dp(6), 0, 0, 0);
+        text.setLayoutParams(textLp);
+        pill.addView(text);
+
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+            0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        lp.setMargins(dp(4), 0, dp(4), 0);
+        pill.setLayoutParams(lp);
+        return pill;
+    }
+
+    /** Прозор между элементами в горизонтальном контейнере. */
+    private View spacer(int widthDp) {
+        View s = new View(this);
+        s.setLayoutParams(new LinearLayout.LayoutParams(widthDp, 1));
+        return s;
     }
 
     /** Стиль пункта чек-листа: выполненный — серый + зачёркнутый, невыполненный — обычный. */

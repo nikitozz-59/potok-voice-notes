@@ -27,6 +27,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.io.File;
@@ -449,12 +450,12 @@ public class MainActivity extends Activity {
                         ? n.text : "Запись " + n.durSec + "с";
             }
 
-            TextView icon = conv.findViewById(R.id.icon);
-            // Тип — только emoji, без цветной подложки (цвета типов убраны).
+            ImageView icon = conv.findViewById(R.id.icon);
+            // Тип — векторная иконка, монохромная (tint из layout = text_secondary).
             if (n.system) {
-                icon.setText("⚙");
+                icon.setImageResource(R.drawable.ic_settings);
             } else {
-                icon.setText(typeIcon(n.type));
+                icon.setImageResource(typeIconRes(n.type));
             }
 
             if (viewType == 0) {
@@ -1098,7 +1099,18 @@ public class MainActivity extends Activity {
         return sb.toString();
     }
 
-    static String typeIcon(String type) {
+    static int typeIconRes(String type) {
+        if ("idea".equals(type)) return R.drawable.ic_type_idea;
+        if ("reminder".equals(type)) return R.drawable.ic_type_reminder;
+        if ("task".equals(type)) return R.drawable.ic_type_task;
+        if ("list".equals(type)) return R.drawable.ic_type_list;
+        if ("note".equals(type)) return R.drawable.ic_type_note;
+        return R.drawable.ic_type_note;
+    }
+
+    /** Emoji-префикс типа — только для RemoteViews (виджет), где ImageView
+     *  в тексте не вставить. В самом приложении используются векторные иконки. */
+    static String typeIconEmoji(String type) {
         if ("idea".equals(type)) return "💡";
         if ("reminder".equals(type)) return "⏰";
         if ("task".equals(type)) return "☑";
