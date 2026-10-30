@@ -3,7 +3,7 @@
 **Голосовые заметки для Android + часов Amazfit Active.**
 Наговариваешь мысль → распознавание речи → LLM разбирает (тип, суть, время события, чек-лист) → заметка оседает в цепочке мыслей, которую можно связывать с другими и прогонять через собственные роли-обработчики.
 
-<p align="center"><b>v3.4</b> · code 25 · minSdk 26 · targetSdk 34 · watch v0.4.0</p>
+<p align="center"><b>v3.8</b> · code 31 · minSdk 26 · targetSdk 34 · watch v0.5.0</p>
 
 > **Репозиторий содержит оба проекта:** Android-приложение (`app/`) и приложение для часов Amazfit Active на Zepp OS (`watch/`). См. раздел [Часы (watch/)](#часы-watch) ниже.
 
@@ -32,7 +32,7 @@
 - **SQLite напрямую** (`NotesDbHelper`, `NotesStore`), без Room.
 - **BYOK** — ключи и эндпоинты STT/LLM хранятся в SharedPreferences на устройстве, в исходниках их нет. Любой OpenAI-совместимый провайдер.
 
-Чистая логика (парсинг LLM-ответа, фолбэк-сплит чек-листов, кодек обработчиков, форматтер времени напоминаний, парсер команд самонастройки) вынесена из Android-зависимостей и покрыта unit-тестами — **121 тест**.
+Чистая логика (парсинг LLM-ответа, фолбэк-сплит чек-листов, кодек обработчиков, форматтер времени напоминаний, парсер команд самонастройки, разбор query-строки `/sync`, перенос текста в чате) вынесена из Android-зависимостей и покрыта unit-тестами — **189 тестов**.
 
 ## Сборка
 
@@ -55,7 +55,7 @@ watch/
 ├── app-side/index.js    # side-service: аккумулятор чанков, fetch /transcribe
 ├── app-service/index.js # фоновый сервис
 ├── widget/index.js      # secondary-widget на циферблат
-├── app.json             # appId, version 0.4.0 (code 40), target amazfit-active
+├── app.json             # appId, version 0.5.0 (code 41), target amazfit-active
 ├── app.js               # BaseApp (messaging-канал)
 ├── assets/              # icon.png + preview (растр, круговая маска)
 └── package.json         # @zeppos/zml, @zeppos/device-types
@@ -80,6 +80,22 @@ npx zeus build           # → dist/<appId>-Поток-<ver>-<ts>.zab
 4. Часы ставят статус `pending` («обработка…»), файл НЕ удаляют (до терминала).
 5. Телефон асинхронно: STT → LLM → `state=DONE` → broadcast.
 6. Следующий SYNC: часы видят `status=done` → обновляют текст, удаляют аудиофайл. При `status=error` (retry ≥ 5) — показывают причину, файл оставляют для повторной отправки.
+
+### Пагинация `/sync` (v3.8)
+
+`GET /sync?since=<updated_at>&limit=<1..200>` отдаёт страницу:
+
+```json
+{ "notes": [...], "next_since": 1700000000001, "has_more": true }
+```
+
+- курсор — по `updated_at`, а не по `ts`: смена статуса (`queued → done/error`)
+  не меняет `ts`, и курсор по `ts` пропустил бы такие обновления;
+- `next_since = max(updated_at в странице) + 1`;
+- `has_more` — реальная проверка хвоста (`hasMoreSince`), а не `notes.size() < limit`;
+- пагинация включается наличием `limit`, поэтому и первый забор (`since=0`)
+  получает `next_since`/`has_more` и сразу двигает курсор;
+- `GET /sync` без параметров — прежний полный дамп, для часов ≤ v0.4.0.
 
 **Порядок выкатки:** часы первыми. Старый watch без ветки `{accepted}` уйдёт в бесконечный ресенд, если телефон уже обновлён.
 
@@ -106,7 +122,7 @@ app/src/main/java/com/nexara/voicenotes/
 watch/                          # приложение для Amazfit Active (Zepp OS 3.0)
 ├── page/index.js              # UI часов: список, запись, SYNC, детали
 ├── app-side/index.js          # BLE side-service → fetch /transcribe
-└── app.json                   # appId 1131887, v0.4.0
+└── app.json                   # appId 1131887, v0.5.0
 ```
 
 ## Лицензия
