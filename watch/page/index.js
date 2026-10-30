@@ -171,11 +171,16 @@ function abToBase64(bytes) {
 
 // ---------- хранилище заметок ----------
 
+let syncCursor = 0 // курсор /sync: последний обработанный updated_at (next_since)
+
 function loadNotes() {
   try {
     const s = readFileSync({ path: NOTES_FILE, options: { encoding: 'utf8' } })
     if (!s) return []
     const d = JSON.parse(s)
+    if (d && typeof d === 'object' && typeof d.syncSince === 'number') {
+      syncCursor = d.syncSince
+    }
     const arr = Array.isArray(d) ? d : (d && d.items) || []
     // Recovery: note со статусом 'sending' прервалась на середине отправки при
     // прошлом запуске — сбрасываем в 'queued', чтобы drain переотправил.
@@ -194,7 +199,7 @@ function saveNotes() {
   try {
     writeFileSync({
       path: NOTES_FILE,
-      data: JSON.stringify({ ver: 1, items: notes }),
+      data: JSON.stringify({ ver: 1, items: notes, syncSince: syncCursor }),
       options: { encoding: 'utf8' },
     })
     return true
@@ -582,64 +587,86 @@ function probeRelay(cb) {
 }
 
 let syncing = false
+const SYNC_PAGE = 40 // порция заметок за один /sync-запрос (лимит телефона ≤200)
+function syncNotesInnerSince(since) {
+  // Докачиваем страницами, пока телефон сообщает has_more: true.
+  function page(cur) {
+    const p = pageInstance.request({ method: 'SYNC', params: { since: String(cur), limit: String(SYNC_PAGE) } })
+    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('sync timeout')), 8000))
+    return Promise.race([p, timeout]).then((r) => {
+      if (!r || !Array.isArray(r.notes)) return Promise.resolve(false)
+      let changed = false
+      // O(n) merge: строим карту по id один раз.
+      const byId = {}
+      for (const n of notes) if (n && n.id != null) byId[n.id] = n
+      for (const rn of r.notes) {
+        if (!rn || !rn.id) continue
+        const local = byId[rn.id]
+        if (local) {
+          if (rn.text && rn.text !== local.text) { local.text = rn.text; changed = true }
+          if (rn.type && rn.type !== local.type) { local.type = rn.type; changed = true }
+          if (rn.summary && rn.summary !== local.summary) { local.summary = rn.summary; changed = true }
+          if (rn.due_iso && rn.due_iso !== local.dueIso) { local.dueIso = rn.due_iso; changed = true }
+          if (rn.calId && rn.calId !== local.calId) { local.calId = rn.calId; changed = true }
+          if (rn.items) { local.items = rn.items; changed = true }
+          // v3.4: телефон закончил обработку → done. Удаляем локальный аудиофайл
+          // (держали с accepted — единственная копия была у телефона в cacheDir).
+          if (rn.status === 'done' && local.status !== 'done') {
+            local.status = 'done'
+            local.err = null
+            if (local.file) {
+              try { rmSync({ path: local.file }) } catch (e) {}
+              local.file = null
+            }
+            changed = true
+          }
+          // v3.4: терминальная ошибка на телефоне (retry >= MAX) → показываем причину,
+          // иначе часы висят на «обработка…» вечно. Файл оставляем — можно переотправить.
+          if (rn.status === 'error' && local.status !== 'error') {
+            local.status = 'error'
+            local.err = rn.last_error || 'не удалось распознать'
+            changed = true
+          }
+        } else {
+          notes.unshift({
+            id: rn.id, at: rn.ts || rn.id, dur: rn.dur || 0, size: rn.size || 0,
+            status: rn.status || 'done', file: null, text: rn.text || null, err: null,
+            type: rn.type || 'note', summary: rn.summary || '',
+            dueIso: rn.due_iso || null, calId: rn.calId || null,
+            items: rn.items || null,
+          })
+          changed = true
+        }
+      }
+      if (changed) {
+        saveNotes()
+        render()
+      }
+      // Движение курсора: next_since приходит от телефона (max(updated)+1).
+      const next = typeof r.next_since === 'number' ? r.next_since : null
+      if (next != null && next > syncCursor) syncCursor = next
+      const more = !!(r.has_more && next != null)
+      if (more) return page(next) // докачиваем следующую страницу
+      syncCursor = Math.max(syncCursor, cur) // подстраховка монотонности
+      saveNotes()
+      return Promise.resolve(changed)
+    })
+  }
+  return page(since).then((changed) => {
+    if (listOpen) renderNotesList()
+    if (detailIdx >= 0) renderDetail()
+    log.log('sync: done, cursor=' + syncCursor)
+    return changed
+  })
+}
+
 function syncNotes() {
   if (!pageInstance || syncing) return
   syncing = true
   try {
-    const p = pageInstance.request({ method: 'SYNC', params: {} })
-    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('sync timeout')), 8000))
-    Promise.race([p, timeout]).then(
-      (r) => {
-        syncing = false
-        if (!r || !Array.isArray(r.notes)) return
-        let changed = false
-        r.notes.forEach((rn) => {
-          if (!rn || !rn.id) return
-          const local = notes.find((n) => n.id === rn.id)
-          if (local) {
-            if (rn.text && rn.text !== local.text) { local.text = rn.text; changed = true }
-            if (rn.type && rn.type !== local.type) { local.type = rn.type; changed = true }
-            if (rn.summary && rn.summary !== local.summary) { local.summary = rn.summary; changed = true }
-            if (rn.due_iso && rn.due_iso !== local.dueIso) { local.dueIso = rn.due_iso; changed = true }
-            if (rn.calId && rn.calId !== local.calId) { local.calId = rn.calId; changed = true }
-            if (rn.items) { local.items = rn.items; changed = true }
-            // v3.4: телефон закончил обработку → done. Удаляем локальный аудиофайл
-            // (держали с accepted — единственная копия была у телефона в cacheDir).
-            if (rn.status === 'done' && local.status !== 'done') {
-              local.status = 'done'
-              local.err = null
-              if (local.file) {
-                try { rmSync({ path: local.file }) } catch (e) {}
-                local.file = null
-              }
-              changed = true
-            }
-            // v3.4: терминальная ошибка на телефоне (retry >= MAX) → показываем причину,
-            // иначе часы висят на «обработка…» вечно. Файл оставляем — можно переотправить.
-            if (rn.status === 'error' && local.status !== 'error') {
-              local.status = 'error'
-              local.err = rn.last_error || 'не удалось распознать'
-              changed = true
-            }
-          } else {
-            notes.unshift({
-              id: rn.id, at: rn.ts || rn.id, dur: rn.dur || 0, size: rn.size || 0,
-              status: rn.status || 'done', file: null, text: rn.text || null, err: null,
-              type: rn.type || 'note', summary: rn.summary || '',
-              dueIso: rn.due_iso || null, calId: rn.calId || null,
-              items: rn.items || null,
-            })
-            changed = true
-          }
-        })
-        if (changed) {
-          saveNotes()
-          render()
-          if (listOpen) renderNotesList()
-          if (detailIdx >= 0) renderDetail()
-          log.log('sync: merged ' + r.notes.length + ' remote notes')
-        }
-      },
+    const cur = syncCursor
+    syncNotesInnerSince(cur).then(
+      () => { syncing = false },
       () => { syncing = false }
     )
   } catch (e) { syncing = false }

@@ -63,12 +63,24 @@ AppSideService(
       }
 
       // SYNC — часы подтягивают актуальные заметки с телефона (двусторонняя синхронизация).
+      // Пагинация: params.since + params.limit прокидываются как query → /sync?since=&limit=.
       if (req.method === 'SYNC') {
         try {
-          const r = await fetch({ url: RELAY_URL + '/sync', method: 'GET' })
+          const p = req.params || {}
+          let url = RELAY_URL + '/sync'
+          const q = []
+          if (p.since != null && p.since !== '') q.push('since=' + encodeURIComponent(p.since))
+          if (p.limit != null && p.limit !== '') q.push('limit=' + encodeURIComponent(p.limit))
+          if (q.length) url += '?' + q.join('&')
+          const r = await fetch({ url: url, method: 'GET' })
           const b = parseBody(r)
           if (b && Array.isArray(b.notes)) {
-            res(null, { notes: b.notes })
+            // Прокидываем next_since / has_more для пагинации (если телефон их прислал).
+            res(null, {
+              notes: b.notes,
+              next_since: b.next_since,
+              has_more: b.has_more,
+            })
           } else {
             res(null, { error: 'sync bad response' })
           }
