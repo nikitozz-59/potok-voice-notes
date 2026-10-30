@@ -38,6 +38,24 @@
                 android:contentDescription="Только развитые" />
 
             <ImageButton
+                android:id="@+id/chatBtn"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:src="@android:drawable/ic_menu_send"
+                android:scaleType="centerInside"
+                android:contentDescription="Чат с LLM" />
+
+            <ImageButton
+                android:id="@+id/importBtn"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:src="@android:drawable/ic_menu_upload"
+                android:scaleType="centerInside"
+                android:contentDescription="Импорт" />
+
+            <ImageButton
                 android:id="@+id/searchBtn"
                 android:layout_width="40dp"
                 android:layout_height="40dp"

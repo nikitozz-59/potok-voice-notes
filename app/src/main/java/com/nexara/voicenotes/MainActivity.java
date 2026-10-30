@@ -13,10 +13,12 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.GradientDrawable;
 import android.media.MediaRecorder;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -153,9 +155,39 @@ public class MainActivity extends Activity {
 
         findViewById(R.id.addTextBtn).setOnClickListener(v -> showTextNoteDialog());
 
+        // Чат с LLM — глобальная точка входа (v3.7).
+        findViewById(R.id.chatBtn).setOnClickListener(v -> {
+            if (ProviderFactory.createLlmProvider(this) != null) {
+                startActivity(new Intent(this, ChatActivity.class));
+            } else {
+                android.widget.Toast.makeText(this, "LLM не настроен", android.widget.Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Импорт / экспорт.
+        findViewById(R.id.importBtn).setOnClickListener(v -> {
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("Импорт / экспорт")
+                .setItems(new String[]{"Импорт текст/MD из файла", "Восстановить из JSON", "Экспорт в JSON"}, (d, which) -> {
+                    if (which == 0) openFilePicker("text/plain", REQ_IMPORT_FILE);
+                    else if (which == 1) openFilePicker("application/json", REQ_IMPORT_JSON);
+                    else exportJson();
+                })
+                .show();
+        });
+
         cancelBtn.setOnClickListener(v -> {
             cancelRecording();
         });
+
+        // Импорт через share-to-app: другойアプリ шарит текст → processTranscript.
+        Intent received = getIntent();
+        if (received != null && Intent.ACTION_SEND.equals(received.getAction())) {
+            String sharedText = received.getStringExtra(Intent.EXTRA_TEXT);
+            if (sharedText != null && !sharedText.trim().isEmpty()) {
+                handleImportText(sharedText.trim());
+            }
+        }
 
         timerHandler = new Handler(Looper.getMainLooper());
         timerTick = new Runnable() {
@@ -840,6 +872,226 @@ public class MainActivity extends Activity {
             })
             .setNegativeButton("Отмена", null)
             .show();
+    }
+
+    // ---------- импорт / экспорт ----------
+
+    private static final int REQ_IMPORT_FILE = 7001;
+    private static final int REQ_EXPORT_JSON = 7002;
+    private static final int REQ_IMPORT_JSON = 7003;
+
+    /** Диалог импорта: выбор источника (файл / JSON-бэкап). */
+    private void showImportDialog() {
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("Импорт")
+            .setItems(new String[]{"Текст / Markdown (файл)", "JSON-бэкап (восстановление)"}, (d, which) -> {
+                if (which == 0) openFilePicker("text/plain", REQ_IMPORT_FILE);
+                else openFilePicker("application/json", REQ_IMPORT_JSON);
+            })
+            .show();
+    }
+
+    private void openFilePicker(String mime, int requestCode) {
+        Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+        i.setType(mime);
+        i.addCategory(Intent.CATEGORY_OPENABLE);
+        try {
+            startActivityForResult(i, requestCode);
+        } catch (Exception e) {
+            android.widget.Toast.makeText(this, "Нет файлового менеджера", android.widget.Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /** Текст из share-to-app или файла: сплит по абзацам → каждый через processTranscript. */
+    private void handleImportText(String text) {
+        // Сплит: 2+ перевода строки = граница абзаца. Короткий текст = одна заметка.
+        String[] parts = text.split("\\n\\s*\\n");
+        int count = 0;
+        for (String part : parts) {
+            String t = part.trim();
+            if (t.isEmpty()) continue;
+            count++;
+        }
+        final int total = count;
+        if (total == 0) {
+            android.widget.Toast.makeText(this, "Пустой текст", android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+        syncText.setText("Импорт " + total + "…");
+        syncIcon.setText("…");
+        syncIcon.setTextColor(ThemeManager.accent(this));
+        new Thread(() -> {
+            for (String part : parts) {
+                String t = part.trim();
+                if (t.isEmpty()) continue;
+                processTranscript(t, 0, 0);
+                try { Thread.sleep(200); } catch (InterruptedException ie) { break; }
+            }
+            runOnUiThread(() -> {
+                android.widget.Toast.makeText(this,
+                    "Импортировано " + total + " заметок", android.widget.Toast.LENGTH_SHORT).show();
+                refresh();
+            });
+        }).start();
+    }
+
+    /** Экспорт всех заметок в JSON (для бэкапа / миграции). */
+    private void exportJson() {
+        List<NotesStore.Note> all = store.list();
+        org.json.JSONArray arr = new org.json.JSONArray();
+        for (NotesStore.Note n : all) {
+            if (n.system) continue;
+            org.json.JSONObject o = new org.json.JSONObject();
+            try {
+                o.put("id", n.id);
+                o.put("ts", n.ts);
+                o.put("type", n.type);
+                o.put("summary", n.summary);
+                o.put("text", n.text);
+                o.put("transcript", n.transcript);
+                o.put("dueIso", n.dueIso);
+                o.put("remindOffsetMin", n.remindOffsetMin);
+                if (n.items != null) {
+                    org.json.JSONArray items = new org.json.JSONArray();
+                    for (CheckItem ci : n.items) {
+                        org.json.JSONObject it = new org.json.JSONObject();
+                        it.put("t", ci.text);
+                        it.put("d", ci.done);
+                        items.put(it);
+                    }
+                    o.put("items", items);
+                }
+                arr.put(o);
+            } catch (Exception e) {}
+        }
+        String json = arr.toString();
+        Intent save = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        save.setType("application/json");
+        save.addCategory(Intent.CATEGORY_OPENABLE);
+        save.putExtra(Intent.EXTRA_TITLE, "potok-export-" + System.currentTimeMillis() + ".json");
+        pendingExportJson = json;
+        try {
+            startActivityForResult(save, REQ_EXPORT_JSON);
+        } catch (Exception e) {
+            android.widget.Toast.makeText(this, "Нет файлового менеджера", android.widget.Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private String pendingExportJson;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
+        android.net.Uri uri = data.getData();
+        if (requestCode == REQ_IMPORT_FILE) {
+            new Thread(() -> {
+                String text = readUriText(uri);
+                if (text == null || text.trim().isEmpty()) {
+                    runOnUiThread(() -> android.widget.Toast.makeText(this,
+                        "Не удалось прочитать файл", android.widget.Toast.LENGTH_SHORT).show());
+                    return;
+                }
+                runOnUiThread(() -> handleImportText(text.trim()));
+            }).start();
+        } else if (requestCode == REQ_IMPORT_JSON) {
+            new Thread(() -> {
+                String json = readUriText(uri);
+                if (json == null) return;
+                int imported = importJson(json);
+                int finalImported = imported;
+                runOnUiThread(() -> {
+                    android.widget.Toast.makeText(this,
+                        "Восстановлено " + finalImported + " заметок", android.widget.Toast.LENGTH_SHORT).show();
+                    refresh();
+                });
+            }).start();
+        } else if (requestCode == REQ_EXPORT_JSON) {
+            if (pendingExportJson != null) {
+                new Thread(() -> {
+                    boolean ok = writeUriText(uri, pendingExportJson);
+                    pendingExportJson = null;
+                    runOnUiThread(() -> android.widget.Toast.makeText(this,
+                        ok ? "Экспорт завершён" : "Ошибка записи",
+                        android.widget.Toast.LENGTH_SHORT).show());
+                }).start();
+            }
+        }
+    }
+
+    private int importJson(String json) {
+        try {
+            org.json.JSONArray arr = new org.json.JSONArray(json);
+            int count = 0;
+            for (int i = 0; i < arr.length(); i++) {
+                org.json.JSONObject o = arr.optJSONObject(i);
+                if (o == null) continue;
+                NotesStore.Note n = new NotesStore.Note();
+                n.id = o.optLong("id", System.currentTimeMillis() + i);
+                n.ts = o.optLong("ts", n.id);
+                n.type = o.optString("type", "note");
+                n.summary = o.optString("summary", "");
+                n.text = o.optString("text", "");
+                n.transcript = o.optString("transcript", n.text);
+                n.dueIso = o.optString("dueIso", null);
+                if (n.dueIso != null && n.dueIso.isEmpty()) n.dueIso = null;
+                n.remindOffsetMin = o.optInt("remindOffsetMin", 0);
+                if (n.remindOffsetMin == 0) n.remindOffsetMin = null;
+                org.json.JSONArray items = o.optJSONArray("items");
+                if (items != null) {
+                    List<String> rawItems = new ArrayList<>();
+                    for (int j = 0; j < items.length(); j++) {
+                        org.json.JSONObject it = items.optJSONObject(j);
+                        if (it != null) rawItems.add(it.optString("t", ""));
+                    }
+                    n.items = CheckItem.wrap(rawItems);
+                    // Восстановить done-статус
+                    if (n.items != null) {
+                        for (int j = 0; j < n.items.size() && j < items.length(); j++) {
+                            org.json.JSONObject it = items.optJSONObject(j);
+                            if (it != null) n.items.get(j).done = it.optBoolean("d", false);
+                        }
+                    }
+                }
+                n.status = "done";
+                n.state = NotesDbHelper.STATE_DONE;
+                n.updatedAt = System.currentTimeMillis();
+                store.addOrUpdate(n);
+                if (n.dueIso != null && ("reminder".equals(n.type) || "task".equals(n.type))) {
+                    try { ReminderScheduler.schedule(this, n); } catch (Exception e) {}
+                }
+                count++;
+            }
+            return count;
+        } catch (Exception e) {
+            Log.e("vn-main", "importJson error: " + e.getMessage(), e);
+            return 0;
+        }
+    }
+
+    private String readUriText(android.net.Uri uri) {
+        try (java.io.InputStream is = getContentResolver().openInputStream(uri)) {
+            if (is == null) return null;
+            java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = is.read(buf)) > 0) bos.write(buf, 0, n);
+            return new String(bos.toByteArray(), java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            Log.e("vn-main", "readUriText: " + e.getMessage(), e);
+            return null;
+        }
+    }
+
+    private boolean writeUriText(android.net.Uri uri, String text) {
+        try (java.io.OutputStream os = getContentResolver().openOutputStream(uri)) {
+            if (os == null) return false;
+            os.write(text.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return true;
+        } catch (Exception e) {
+            Log.e("vn-main", "writeUriText: " + e.getMessage(), e);
+            return false;
+        }
     }
 
     // ---------- авто-обработка необработанных (без кнопки) ----------

@@ -189,6 +189,22 @@ public class ThoughtDetailActivity extends Activity {
         Button addBtn = makeButton("➕  Дополнить своим", v -> showAddInput());
         root.addView(addBtn);
 
+        // Поделиться заметкой — Android share sheet (ACTION_SEND, plain text).
+        Button shareBtn = makeButton("↗  Поделиться", v -> shareNote());
+        root.addView(shareBtn);
+
+        // Обсудить с LLM — отдельный чат, стартует с контекстом этой заметки.
+        // (entry point для ChatActivity, v3.7.)
+        if (llm != null) {
+            Button chatBtn = makeButton("💬  Обсудить", v -> {
+                Intent i = new Intent(this, ChatActivity.class);
+                i.putExtra("seed_text", note.text != null ? note.text : note.summary);
+                i.putExtra("seed_summary", note.summary);
+                startActivity(i);
+            });
+            root.addView(chatBtn);
+        }
+
         // Облачка — пользовательские обработчики (LLM-роли).
         // Создаются в Настройках → Обработчики. Тап по облачку — разбор через эту роль.
         renderProcessorClouds(root);
@@ -322,6 +338,37 @@ public class ThoughtDetailActivity extends Activity {
             showResult(p.name, result);
             loadChildren();
         });
+    }
+
+    // === Поделиться заметкой ===
+
+    /** Android share sheet: простой текст (суть + текст + пункты). */
+    private void shareNote() {
+        StringBuilder sb = new StringBuilder();
+        if (note.summary != null && !note.summary.isEmpty()) {
+            sb.append(note.summary).append("\n\n");
+        }
+        if (note.type != null && !note.type.equals("note")) {
+            sb.append("[").append(note.type).append("]\n");
+        }
+        if (note.items != null && !note.items.isEmpty()) {
+            for (CheckItem ci : note.items) {
+                sb.append(ci.done ? "[x] " : "[ ] ").append(ci.text != null ? ci.text : "").append("\n");
+            }
+            sb.append("\n");
+        }
+        if (note.text != null && !note.text.isEmpty()) {
+            sb.append(note.text);
+        }
+        if (sb.length() == 0) sb.append("(пустая заметка)");
+
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType("text/plain");
+        send.putExtra(Intent.EXTRA_TEXT, sb.toString());
+        if (note.summary != null && !note.summary.isEmpty()) {
+            send.putExtra(Intent.EXTRA_SUBJECT, note.summary);
+        }
+        startActivity(Intent.createChooser(send, "Поделиться заметкой"));
     }
 
     // === Найти связи ===

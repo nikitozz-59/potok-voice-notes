@@ -25,6 +25,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Приём текста от других приложений (share-to-app) → импорт в заметки -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
         </activity>
 
         <activity android:name=".SettingsActivity" android:exported="false" />
@@ -32,6 +38,7 @@
         <activity android:name=".EditNoteActivity" android:exported="false" />
         <activity android:name=".SearchActivity" android:exported="false" />
         <activity android:name=".ProcessorsActivity" android:exported="false" />
+        <activity android:name=".ChatActivity" android:exported="false" />
 
         <service
             android:name=".RelayService"
