@@ -115,28 +115,15 @@ public class MainActivity extends Activity {
         recTimer = findViewById(R.id.recTimer);
         syncBanner = findViewById(R.id.syncBanner);
 
-        // Шапка: «Поток» + два действия (чат, фильтр «только развитые»).
-        // Раньше — overflow-меню по ⋮; теперь действия вынесены в иконки,
-        // импорт/экспорт и настройки — в «Новая заметка» → долгий тап? Нет:
-        // импорт/экспорт/настройки перенесены в SettingsActivity, см. ниже.
-        TopBarLayout topBar = findViewById(R.id.topBar);
-        topBar.setTitle("Поток");
-        topBar.setAction1(R.drawable.ic_chat, v -> {
-            if (ProviderFactory.createLlmProvider(this) != null) {
-                startActivity(new Intent(this, ChatActivity.class));
-            } else {
-                Toast.makeText(this, "LLM не настроен", Toast.LENGTH_SHORT).show();
-            }
-        });
-        topBar.setAction2(R.drawable.ic_settings, v ->
-            startActivity(new Intent(this, SettingsActivity.class)));
+        // Шапка: «Поток» + ⋮ (overflow). Чат, импорт/экспорт, настройки, фильтр — в меню.
+        findViewById(R.id.overflowBtn).setOnClickListener(v -> showOverflow());
 
         findViewById(R.id.searchField).setOnClickListener(v -> {
             startActivity(new Intent(this, SearchActivity.class));
         });
 
-        // «+ Новая заметка» — создаёт текстовую заметку (раньше было в ⋮-меню).
-        // Long-press — импорт/экспорт/фильтр.
+        // «+ Новая заметка» — слева внизу. Тап — создать текстовую заметку,
+        // long-press — импорт/экспорт/фильтр «только развитые».
         View newNoteBtn = findViewById(R.id.newNoteBtn);
         newNoteBtn.setOnClickListener(v -> showTextNoteDialog());
         newNoteBtn.setOnLongClickListener(v -> { showImportExport(); return true; });
@@ -349,13 +336,8 @@ public class MainActivity extends Activity {
 
     private void applyTheme() {
         ThemeManager.applyToWindow(this);
-        // Кнопка записи — белый круг, иконка tint акцентом темы (в покое).
-        // Во время записи фон красный (зарезервированный stop_red), тема не трогает.
-        if (recFab != null && !recording) {
-            recFab.setBackgroundResource(R.drawable.bg_fab);
-            int accent = ThemeManager.accent(this);
-            recFab.setImageTintList(android.content.res.ColorStateList.valueOf(accent));
-        }
+        // Кнопка записи — зарезервированная (зелёная rec_green), тема её не трогает.
+        // Иконка ic_mic/ic_stop белая через fillColor, tint не нужен.
         if (recPill != null) {
             GradientDrawable pillBg = new GradientDrawable();
             pillBg.setShape(GradientDrawable.RECTANGLE);
@@ -551,8 +533,42 @@ public class MainActivity extends Activity {
 
     // ---------- доп. действия ----------
 
-    /** Long-press по «+ Новая заметка»: импорт/экспорт (раньше в ⋮-меню).
-     *  Обычный тап — создать текстовую заметку. */
+    /** Меню ⋮ в шапке: только развитые, чат, импорт/экспорт, настройки.
+     *  «Ввести текстом» убран — теперь это «+ Новая заметка» внизу. */
+    private void showOverflow() {
+        android.widget.PopupMenu popup = new android.widget.PopupMenu(this, findViewById(R.id.overflowBtn));
+        popup.inflate(R.menu.main);
+        popup.getMenu().findItem(R.id.menu_developed).setChecked(developedOnly);
+        popup.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.menu_developed) {
+                developedOnly = !developedOnly;
+                applyFilter();
+                return true;
+            }
+            if (id == R.id.menu_chat) {
+                if (ProviderFactory.createLlmProvider(this) != null) {
+                    startActivity(new Intent(this, ChatActivity.class));
+                } else {
+                    Toast.makeText(this, "LLM не настроен", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            }
+            if (id == R.id.menu_import) {
+                showImportExport();
+                return true;
+            }
+            if (id == R.id.menu_settings) {
+                startActivity(new Intent(this, SettingsActivity.class));
+                return true;
+            }
+            return false;
+        });
+        popup.show();
+    }
+
+    /** Диалог импорт/экспорт + переключатель «только развитые».
+     *  Вызывается из ⋮-меню и по long-press на «+ Новая заметка». */
     private void showImportExport() {
         new android.app.AlertDialog.Builder(this)
             .setTitle("Импорт / экспорт")
@@ -624,7 +640,6 @@ public class MainActivity extends Activity {
             startTime = System.currentTimeMillis();
             recFab.setImageResource(R.drawable.ic_stop);
             recFab.setBackgroundResource(R.drawable.bg_fab_rec);
-            recFab.setImageTintList(null); // белая иконка на красном фоне
             recTimer.setText("0:00");
             recPill.setVisibility(View.VISIBLE);
             timerHandler.postDelayed(timerTick, 1000);
@@ -694,8 +709,6 @@ public class MainActivity extends Activity {
     private void resetFabIdle() {
         recFab.setImageResource(R.drawable.ic_mic);
         recFab.setBackgroundResource(R.drawable.bg_fab);
-        recFab.setImageTintList(android.content.res.ColorStateList.valueOf(
-                getResources().getColor(R.color.accent_blue)));
         if (recPill != null) recPill.setVisibility(View.GONE);
     }
 

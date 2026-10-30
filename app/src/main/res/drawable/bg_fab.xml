@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Кнопка записи: белый круг с синей иконкой микрофона (как на референсе —
-     вторичное действие). Во время записи подменяется на bg_fab_rec (красный). -->
+<!-- Кнопка записи: зелёный круг (rec_green) с белым микрофоном.
+     Зелёный — зарезервированный цвет индикатора записи; здесь по прямому
+     назначению (готовность/режим записи). Как на референсе.
+     Во время записи подменяется на bg_fab_rec (красный stop_red). -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true">
         <shape android:shape="oval">
-            <solid android:color="@color/potok_surface_secondary" />
+            <solid android:color="#00C75B" />
         </shape>
     </item>
     <item>
         <shape android:shape="oval">
-            <solid android:color="@color/bg_card" />
+            <solid android:color="@color/rec_green" />
         </shape>
     </item>
 </selector>
