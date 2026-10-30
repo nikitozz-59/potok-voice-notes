@@ -9,34 +9,13 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <LinearLayout
+        <!-- Настраиваемая шапка: «Поток» + две иконки-действия. -->
+        <com.nexara.voicenotes.TopBarLayout
+            android:id="@+id/topBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingLeft="20dp"
-            android:paddingRight="12dp"
-            android:paddingTop="20dp"
-            android:paddingBottom="4dp"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textAppearance="@style/TextAppearance.Potok.Headline"
-                android:textColor="@color/text_primary"
-                android:text="Поток" />
-
-            <ImageButton
-                android:id="@+id/overflowBtn"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?android:attr/selectableItemBackground"
-                android:src="@drawable/ic_more"
-                android:tint="@color/text_primary"
-                android:scaleType="centerInside"
-                android:contentDescription="Меню" />
-        </LinearLayout>
+            android:paddingLeft="12dp"
+            android:paddingRight="2dp" />
 
         <!-- Строка статуса синхронизации: постоянная, тонкая.
              Resting — «✓ Синхронизировано» (зелёная галочка + серый текст).
@@ -48,7 +27,7 @@
             android:orientation="horizontal"
             android:paddingLeft="20dp"
             android:paddingRight="20dp"
-            android:paddingTop="2dp"
+            android:paddingTop="0dp"
             android:paddingBottom="6dp"
             android:gravity="center_vertical">
 
@@ -135,7 +114,7 @@
                 android:paddingLeft="@dimen/space_m"
                 android:paddingRight="@dimen/space_m"
                 android:paddingTop="4dp"
-                android:paddingBottom="96dp"
+                android:paddingBottom="80dp"
                 android:clipToPadding="false"
                 android:scrollbars="none" />
 
@@ -151,35 +130,76 @@
                 android:padding="32dp"
                 android:lineSpacingExtra="4dp"
                 android:visibility="gone" />
-        </FrameLayout>
-    </LinearLayout>
 
-            <ImageButton
-                android:id="@+id/recFab"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:layout_gravity="bottom|end"
-                android:layout_margin="20dp"
-                android:background="@drawable/bg_fab"
-                android:src="@drawable/ic_mic"
-                android:scaleType="center"
-                android:contentDescription="Запись" />
+            <!-- Bottom bar: «Запись» слева, «+ Новая заметка» — слева внизу.
+                 Обе на нижнем крае, не перекрывают список (ListView paddingBottom 80dp). -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:orientation="horizontal"
+                android:paddingLeft="@dimen/space_m"
+                android:paddingRight="@dimen/space_m"
+                android:paddingBottom="@dimen/space_m"
+                android:gravity="center_vertical">
+
+                <ImageButton
+                    android:id="@+id/recFab"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:background="@drawable/bg_fab"
+                    android:src="@drawable/ic_mic"
+                    android:tint="@color/accent_blue"
+                    android:scaleType="center"
+                    android:elevation="2dp"
+                    android:contentDescription="Запись" />
+
+                <LinearLayout
+                    android:id="@+id/newNoteBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:orientation="horizontal"
+                    android:layout_marginLeft="@dimen/space_m"
+                    android:background="@drawable/bg_btn_new_note"
+                    android:paddingLeft="14dp"
+                    android:paddingRight="18dp"
+                    android:gravity="center_vertical"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_add"
+                        android:tint="@color/accent_blue"
+                        android:scaleType="centerInside"
+                        android:contentDescription="Добавить" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="6dp"
+                        android:textAppearance="@style/TextAppearance.Potok.Title"
+                        android:textColor="@color/accent_blue"
+                        android:text="Новая заметка" />
+                </LinearLayout>
+            </LinearLayout>
 
             <!-- Статус записи: единственный индикатор, видимый только пока идёт
-                 запись (индикатор по исключению). Точка-уровень 8dp + таймер. -->
+                 запись. Точка-уровень 8dp + таймер. Дальше — слева от recFab. -->
             <LinearLayout
                 android:id="@+id/recPill"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
-                android:layout_gravity="bottom|end"
-                android:layout_marginRight="20dp"
-                android:layout_marginBottom="88dp"
+                android:layout_gravity="bottom|start"
+                android:layout_marginLeft="80dp"
+                android:layout_marginBottom="@dimen/space_m"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:background="@drawable/bg_pill"
                 android:paddingLeft="14dp"
                 android:paddingRight="14dp"
-                android:elevation="2dp"
+                android:elevation="4dp"
                 android:visibility="gone">
 
                 <View
@@ -198,3 +218,5 @@
                     android:text="0:00" />
             </LinearLayout>
         </FrameLayout>
+    </LinearLayout>
+</FrameLayout>

@@ -115,11 +115,31 @@ public class MainActivity extends Activity {
         recTimer = findViewById(R.id.recTimer);
         syncBanner = findViewById(R.id.syncBanner);
 
-        // Шапка: поиск + overflow (⋮). Чат, импорт, настройки, «только развитые» — в меню.
+        // Шапка: «Поток» + два действия (чат, фильтр «только развитые»).
+        // Раньше — overflow-меню по ⋮; теперь действия вынесены в иконки,
+        // импорт/экспорт и настройки — в «Новая заметка» → долгий тап? Нет:
+        // импорт/экспорт/настройки перенесены в SettingsActivity, см. ниже.
+        TopBarLayout topBar = findViewById(R.id.topBar);
+        topBar.setTitle("Поток");
+        topBar.setAction1(R.drawable.ic_chat, v -> {
+            if (ProviderFactory.createLlmProvider(this) != null) {
+                startActivity(new Intent(this, ChatActivity.class));
+            } else {
+                Toast.makeText(this, "LLM не настроен", Toast.LENGTH_SHORT).show();
+            }
+        });
+        topBar.setAction2(R.drawable.ic_settings, v ->
+            startActivity(new Intent(this, SettingsActivity.class)));
+
         findViewById(R.id.searchField).setOnClickListener(v -> {
             startActivity(new Intent(this, SearchActivity.class));
         });
-        findViewById(R.id.overflowBtn).setOnClickListener(v -> showOverflow());
+
+        // «+ Новая заметка» — создаёт текстовую заметку (раньше было в ⋮-меню).
+        // Long-press — импорт/экспорт/фильтр.
+        View newNoteBtn = findViewById(R.id.newNoteBtn);
+        newNoteBtn.setOnClickListener(v -> showTextNoteDialog());
+        newNoteBtn.setOnLongClickListener(v -> { showImportExport(); return true; });
 
         buildChips();
 
@@ -329,9 +349,13 @@ public class MainActivity extends Activity {
 
     private void applyTheme() {
         ThemeManager.applyToWindow(this);
-        // FAB красим акцентом темы только в покое — во время записи фон красный
-        // (зарезервированный stop_red), его тема не трогает.
-        if (recFab != null && !recording) recFab.setBackground(ThemeManager.accentButton(this, 28));
+        // Кнопка записи — белый круг, иконка tint акцентом темы (в покое).
+        // Во время записи фон красный (зарезервированный stop_red), тема не трогает.
+        if (recFab != null && !recording) {
+            recFab.setBackgroundResource(R.drawable.bg_fab);
+            int accent = ThemeManager.accent(this);
+            recFab.setImageTintList(android.content.res.ColorStateList.valueOf(accent));
+        }
         if (recPill != null) {
             GradientDrawable pillBg = new GradientDrawable();
             pillBg.setShape(GradientDrawable.RECTANGLE);
@@ -525,50 +549,21 @@ public class MainActivity extends Activity {
         }
     }
 
-    // ---------- overflow-меню шапки ----------
+    // ---------- доп. действия ----------
 
-    /** Меню ⋮: чат, ввод текстом, импорт/экспорт, настройки, «только развитые». */
-    private void showOverflow() {
-        android.widget.PopupMenu popup = new android.widget.PopupMenu(this, findViewById(R.id.overflowBtn));
-        popup.inflate(R.menu.main);
-        popup.getMenu().findItem(R.id.menu_developed).setChecked(developedOnly);
-        popup.setOnMenuItemClickListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.menu_developed) {
-                developedOnly = !developedOnly;
-                applyFilter();
-                return true;
-            }
-            if (id == R.id.menu_chat) {
-                if (ProviderFactory.createLlmProvider(this) != null) {
-                    startActivity(new Intent(this, ChatActivity.class));
-                } else {
-                    android.widget.Toast.makeText(this, "LLM не настроен", android.widget.Toast.LENGTH_SHORT).show();
-                }
-                return true;
-            }
-            if (id == R.id.menu_add_text) {
-                showTextNoteDialog();
-                return true;
-            }
-            if (id == R.id.menu_import) {
-                new android.app.AlertDialog.Builder(this)
-                    .setTitle("Импорт / экспорт")
-                    .setItems(new String[]{"Импорт текст/MD из файла", "Восстановить из JSON", "Экспорт в JSON"}, (d, which) -> {
-                        if (which == 0) openFilePicker("text/plain", REQ_IMPORT_FILE);
-                        else if (which == 1) openFilePicker("application/json", REQ_IMPORT_JSON);
-                        else exportJson();
-                    })
-                    .show();
-                return true;
-            }
-            if (id == R.id.menu_settings) {
-                startActivity(new Intent(this, SettingsActivity.class));
-                return true;
-            }
-            return false;
-        });
-        popup.show();
+    /** Long-press по «+ Новая заметка»: импорт/экспорт (раньше в ⋮-меню).
+     *  Обычный тап — создать текстовую заметку. */
+    private void showImportExport() {
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("Импорт / экспорт")
+            .setItems(new String[]{"Импорт текст/MD из файла", "Восстановить из JSON", "Экспорт в JSON",
+                                   developedOnly ? "Показать все заметки" : "Только развитые"}, (d, which) -> {
+                if (which == 0) openFilePicker("text/plain", REQ_IMPORT_FILE);
+                else if (which == 1) openFilePicker("application/json", REQ_IMPORT_JSON);
+                else if (which == 2) exportJson();
+                else { developedOnly = !developedOnly; applyFilter(); }
+            })
+            .show();
     }
 
     // ---------- дополнить мысль своим текстом ----------
@@ -629,6 +624,7 @@ public class MainActivity extends Activity {
             startTime = System.currentTimeMillis();
             recFab.setImageResource(R.drawable.ic_stop);
             recFab.setBackgroundResource(R.drawable.bg_fab_rec);
+            recFab.setImageTintList(null); // белая иконка на красном фоне
             recTimer.setText("0:00");
             recPill.setVisibility(View.VISIBLE);
             timerHandler.postDelayed(timerTick, 1000);
@@ -698,6 +694,8 @@ public class MainActivity extends Activity {
     private void resetFabIdle() {
         recFab.setImageResource(R.drawable.ic_mic);
         recFab.setBackgroundResource(R.drawable.bg_fab);
+        recFab.setImageTintList(android.content.res.ColorStateList.valueOf(
+                getResources().getColor(R.color.accent_blue)));
         if (recPill != null) recPill.setVisibility(View.GONE);
     }
 

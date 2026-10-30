@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Кнопка «Новая заметка»: контурная пилюля (border accent, прозрачный фон,
+     синий текст/иконка). Высота 44dp, скругление 22dp. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/accent_blue_soft" />
+            <corners android:radius="22dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+            <corners android:radius="22dp" />
+            <stroke android:width="1dp" android:color="@color/accent_blue" />
+        </shape>
+    </item>
+</selector>
