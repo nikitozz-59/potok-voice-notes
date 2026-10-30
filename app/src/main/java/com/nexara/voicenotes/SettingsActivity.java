@@ -4,13 +4,15 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 public class SettingsActivity extends Activity {
     private EditText keyInput;
-    private EditText sttProviderInput;
+    private Spinner sttProviderSpinner;
     private EditText sttBaseUrlInput;
     private EditText sttModelInput;
     private EditText sttKeyInput;
@@ -19,6 +21,10 @@ public class SettingsActivity extends Activity {
     private EditText llmKeyInput;
     private TextView statusLine;
     private SharedPreferences prefs;
+
+    /** Две опции провайдера STT. Индекс 0 = Nexara, 1 = OpenAI-совместимый. */
+    private static final String[] PROVIDER_LABELS = {"Nexara", "OpenAI-совместимый"};
+    private static final String[] PROVIDER_VALUES = {"nexara", "openai"};
 
     @Override
     protected void onCreate(Bundle s) {
@@ -29,7 +35,7 @@ public class SettingsActivity extends Activity {
         findViewById(R.id.backBtn).setOnClickListener(v -> finish());
 
         keyInput = findViewById(R.id.keyInput);
-        sttProviderInput = findViewById(R.id.sttProviderInput);
+        sttProviderSpinner = findViewById(R.id.sttProviderSpinner);
         sttBaseUrlInput = findViewById(R.id.sttBaseUrlInput);
         sttModelInput = findViewById(R.id.sttModelInput);
         sttKeyInput = findViewById(R.id.sttKeyInput);
@@ -42,8 +48,15 @@ public class SettingsActivity extends Activity {
         findViewById(R.id.processorsBtn).setOnClickListener(v ->
             startActivity(new Intent(this, ProcessorsActivity.class)));
 
+        // Spinner провайдера: Nexara / OpenAI-совместимый.
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+            this, R.layout.spinner_item, PROVIDER_LABELS);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sttProviderSpinner.setAdapter(adapter);
+        String currentProvider = prefs.getString("stt_provider", "nexara");
+        sttProviderSpinner.setSelection("openai".equals(currentProvider) ? 1 : 0);
+
         keyInput.setText(prefs.getString("nexara_key", ""));
-        sttProviderInput.setText(prefs.getString("stt_provider", "nexara"));
         sttBaseUrlInput.setText(prefs.getString("stt_base_url", "https://api.openai.com/v1"));
         sttModelInput.setText(prefs.getString("stt_model", "whisper-1"));
         sttKeyInput.setText(prefs.getString("stt_key", ""));
@@ -55,8 +68,8 @@ public class SettingsActivity extends Activity {
         save.setOnClickListener(v -> {
             SharedPreferences.Editor ed = prefs.edit();
             ed.putString("nexara_key", keyInput.getText().toString().trim());
-            String sttProvider = sttProviderInput.getText().toString().trim().toLowerCase();
-            ed.putString("stt_provider", sttProvider.isEmpty() ? "nexara" : sttProvider);
+            ed.putString("stt_provider",
+                PROVIDER_VALUES[sttProviderSpinner.getSelectedItemPosition()]);
             ed.putString("stt_base_url", sttBaseUrlInput.getText().toString().trim());
             ed.putString("stt_model", sttModelInput.getText().toString().trim());
             ed.putString("stt_key", sttKeyInput.getText().toString().trim());

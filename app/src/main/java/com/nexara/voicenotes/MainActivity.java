@@ -370,13 +370,13 @@ public class MainActivity extends Activity {
         if (!hasKey || !hasLlm) {
             text = "Введите ключи Nexara и PlusVibe в Настройках";
             icon = "!";
-            iconColor = 0xFFFF1744;
+            iconColor = getResources().getColor(R.color.error);
         } else if (RelayService.lastError != null) {
             String e = RelayService.lastError;
             if (e.length() > 50) e = e.substring(0, 50) + "…";
             text = "Ошибка: " + e;
             icon = "!";
-            iconColor = 0xFFFF1744;
+            iconColor = getResources().getColor(R.color.error);
         } else {
             int queued = 0;
             int unproc = 0;

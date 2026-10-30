@@ -53,7 +53,6 @@ public class SearchActivity extends Activity {
         header.setText("🔍 Поиск");
         header.setTextAppearance(this, R.style.TextAppearance_Potok_Headline);
         header.setTextColor(0xFF121212);
-        header.setTypeface(null, android.graphics.Typeface.BOLD);
         header.setPadding(dp(16), dp(16), dp(16), dp(8));
         root.addView(header);
 

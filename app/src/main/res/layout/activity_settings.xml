@@ -91,26 +91,24 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_m"
-                android:text="Запасной провайдер (nexara или openai)"
+                android:text="Запасной провайдер"
                 android:textAppearance="@style/TextAppearance.Potok.Caption"
                 android:textColor="@color/text_secondary" />
 
-            <EditText
-                android:id="@+id/sttProviderInput"
+            <Spinner
+                android:id="@+id/sttProviderSpinner"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_xs"
-                android:hint="nexara"
-                android:inputType="text"
-                android:textAppearance="@style/TextAppearance.Potok.Body"
                 android:background="@drawable/bg_field"
-                android:padding="@dimen/space_m" />
+                android:paddingTop="@dimen/space_xs"
+                android:paddingBottom="@dimen/space_xs" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/space_m"
-                android:text="Base URL (если openai)"
+                android:layout_marginTop="@dimen/space_s"
+                android:text="Base URL (для OpenAI-совместимого)"
                 android:textAppearance="@style/TextAppearance.Potok.Caption"
                 android:textColor="@color/text_secondary" />
 
@@ -129,7 +127,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_m"
-                android:text="Модель (если openai)"
+                android:text="Модель (для OpenAI-совместимого)"
                 android:textAppearance="@style/TextAppearance.Potok.Caption"
                 android:textColor="@color/text_secondary" />
 
@@ -148,7 +146,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/space_m"
-                android:text="API-ключ (если openai)"
+                android:text="API-ключ (для OpenAI-совместимого)"
                 android:textAppearance="@style/TextAppearance.Potok.Caption"
                 android:textColor="@color/text_secondary" />
 

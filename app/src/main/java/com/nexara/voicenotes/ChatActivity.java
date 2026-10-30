@@ -89,7 +89,7 @@ public class ChatActivity extends Activity {
         if (llm == null) {
             TextView noLlm = new TextView(this);
             noLlm.setText("LLM не настроен.\nЗадайте ключ в Настройках.");
-            noLlm.setTextColor(0xFFFF1744);
+            noLlm.setTextColor(getResources().getColor(R.color.error));
             noLlm.setPadding(p, dp(20), p, dp(20));
             root.addView(noLlm);
             setContentView(root);
@@ -305,7 +305,7 @@ public class ChatActivity extends Activity {
             lp.gravity = Gravity.END;
             lp.setMargins(dp(40), dp(4), 0, dp(4));
         } else if ("error".equals(who)) {
-            b.setTextColor(0xFFFF1744);
+            b.setTextColor(getResources().getColor(R.color.error));
             b.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
             GradientDrawable bg = new GradientDrawable();
             bg.setShape(GradientDrawable.RECTANGLE);

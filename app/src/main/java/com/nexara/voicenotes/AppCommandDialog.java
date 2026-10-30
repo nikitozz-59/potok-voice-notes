@@ -319,7 +319,6 @@ public class AppCommandDialog extends Dialog {
         tv.setText((isUser ? "вы: " : "поток: ") + text);
         tv.setTextAppearance(ctx, R.style.TextAppearance_Potok_Body);
         tv.setTextColor(color);
-        if (!isUser) tv.setTypeface(null, android.graphics.Typeface.BOLD);
         tv.setPadding(0, dp(4), 0, dp(3));
         log.addView(tv);
         trimLog();

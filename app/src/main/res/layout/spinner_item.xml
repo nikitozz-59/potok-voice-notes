@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Item выбранного значения Spinner в настройках.
+     Body + text_primary, padding как у полей ввода. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textAppearance="@style/TextAppearance.Potok.Body"
+    android:textColor="@color/text_primary"
+    android:paddingTop="@dimen/space_m"
+    android:paddingBottom="@dimen/space_m" />

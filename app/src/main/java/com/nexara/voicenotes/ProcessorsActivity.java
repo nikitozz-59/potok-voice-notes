@@ -65,7 +65,6 @@ public class ProcessorsActivity extends Activity {
         title.setText("Обработчики");
         title.setTextAppearance(this, R.style.TextAppearance_Potok_Headline);
         title.setTextColor(ThemeManager.TEXT_PRIMARY);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
         header.addView(title);
         root.addView(header);
 
@@ -158,7 +157,6 @@ public class ProcessorsActivity extends Activity {
         name.setText(p.name);
         name.setTextAppearance(this, R.style.TextAppearance_Potok_Title);
         name.setTextColor(ThemeManager.TEXT_PRIMARY);
-        name.setTypeface(null, android.graphics.Typeface.BOLD);
         LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(
             0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
         name.setLayoutParams(nlp);

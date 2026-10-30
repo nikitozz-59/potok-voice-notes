@@ -195,7 +195,7 @@ public class ThoughtDetailActivity extends Activity {
             startActivity(i);
         }));
 
-        actions.addView(makeTextAction("🗑 Удалить", 0xFFFF1744, v -> {
+        actions.addView(makeTextAction("🗑 Удалить", getResources().getColor(R.color.destructive), v -> {
             new android.app.AlertDialog.Builder(this)
                 .setMessage("Удалить заметку?")
                 .setPositiveButton("Удалить", (dd, w) -> {
@@ -217,7 +217,7 @@ public class ThoughtDetailActivity extends Activity {
         } else {
             TextView noLlm = new TextView(this);
             noLlm.setText("LLM не настроен — задайте ключ в Настройках");
-            noLlm.setTextColor(0xFFFF1744);
+            noLlm.setTextColor(getResources().getColor(R.color.error));
             noLlm.setPadding(0, dp(12), 0, dp(4));
             root.addView(noLlm);
         }
@@ -315,9 +315,8 @@ public class ThoughtDetailActivity extends Activity {
     private Button makeButton(String text, View.OnClickListener listener) {
         Button btn = new Button(this);
         btn.setText(text);
-        btn.setTextAppearance(this, R.style.TextAppearance_Potok_Body);
+        btn.setTextAppearance(this, R.style.TextAppearance_Potok_Title);
         btn.setTextColor(ThemeManager.accent(this));
-        btn.setTypeface(null, android.graphics.Typeface.BOLD);
         android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
         gd.setColor(0xFFFFFFFF);
         gd.setCornerRadius(dp(14));
@@ -350,7 +349,6 @@ public class ThoughtDetailActivity extends Activity {
         label.setText("Обработчики");
         label.setTextAppearance(this, R.style.TextAppearance_Potok_Title);
         label.setTextColor(ThemeManager.accent(this));
-        label.setTypeface(null, android.graphics.Typeface.BOLD);
         label.setPadding(0, dp(20), 0, dp(8));
         root.addView(label);
 
@@ -363,7 +361,6 @@ public class ThoughtDetailActivity extends Activity {
             cloud.setText(p.name);
             cloud.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
             cloud.setTextColor(ThemeManager.onColor(color));
-            cloud.setTypeface(null, android.graphics.Typeface.BOLD);
             cloud.setGravity(android.view.Gravity.CENTER);
             int hp = dp(7), wp = dp(14);
             cloud.setPadding(wp, hp, wp, hp);
@@ -758,7 +755,7 @@ public class ThoughtDetailActivity extends Activity {
             TextView del = new TextView(this);
             del.setText("✕");
             del.setTextSize(16); // glyph-иконка удаления, не текст — вне типошкалы
-            del.setTextColor(0xFFD32F2F);
+            del.setTextColor(getResources().getColor(R.color.destructive));
             del.setPadding(dp(8), dp(4), dp(8), dp(4));
             del.setOnClickListener(v -> {
                 store.removeLink(note.id, otherId);
