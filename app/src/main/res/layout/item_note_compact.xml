@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Компактная строка заметки (одна строка). Плоская: без карточного фона,
+     без цветного облачка. Тип — только emoji. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:background="@drawable/bg_card"
-    android:paddingLeft="16dp"
-    android:paddingRight="12dp"
-    android:paddingTop="10dp"
-    android:paddingBottom="10dp"
-    android:layout_marginBottom="6dp"
+    android:paddingLeft="@dimen/space_l"
+    android:paddingRight="@dimen/space_l"
+    android:paddingTop="@dimen/space_s"
+    android:paddingBottom="@dimen/space_s"
     android:gravity="center_vertical">
 
     <TextView
         android:id="@+id/icon"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
         android:gravity="center"
         android:textAppearance="@style/TextAppearance.Potok.Body"
         android:text="•" />
@@ -24,7 +24,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:layout_marginLeft="10dp"
+        android:layout_marginLeft="@dimen/space_s"
         android:textAppearance="@style/TextAppearance.Potok.Body"
         android:textColor="@color/text_primary"
         android:maxLines="1"
@@ -34,7 +34,7 @@
         android:id="@+id/time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="8dp"
+        android:layout_marginLeft="@dimen/space_s"
         android:textAppearance="@style/TextAppearance.Potok.Caption"
         android:textColor="@color/text_secondary" />
 </LinearLayout>

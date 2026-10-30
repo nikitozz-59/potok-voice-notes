@@ -1,19 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Строка заметки (развитая — с превью). Плоская: без карточного фона,
+     без цветного облачка по типу. Тип кодируется только emoji-иконкой.
+     Разделитель — у ListView (divider), не у строки. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:background="@drawable/bg_card"
-    android:padding="16dp"
-    android:layout_marginBottom="10dp"
+    android:paddingLeft="@dimen/space_l"
+    android:paddingRight="@dimen/space_l"
+    android:paddingTop="@dimen/space_m"
+    android:paddingBottom="@dimen/space_m"
     android:gravity="top">
 
+    <!-- Иконка-тип: только emoji, без подложки. Колонка фиксированной ширины
+         для выравнивания заголовков по одной линии. -->
     <TextView
         android:id="@+id/icon"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
         android:gravity="center"
-        android:textAppearance="@style/TextAppearance.Potok.Headline"
+        android:textAppearance="@style/TextAppearance.Potok.Title"
         android:text="•" />
 
     <LinearLayout
@@ -21,7 +27,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:layout_marginLeft="12dp">
+        android:layout_marginLeft="@dimen/space_s">
 
         <TextView
             android:id="@+id/title"
@@ -36,7 +42,7 @@
             android:id="@+id/preview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
+            android:layout_marginTop="2dp"
             android:textAppearance="@style/TextAppearance.Potok.Body"
             android:textColor="@color/text_secondary"
             android:maxLines="2"
@@ -46,7 +52,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="6dp">
+            android:layout_marginTop="@dimen/space_s">
 
             <TextView
                 android:id="@+id/devMeta"
@@ -54,22 +60,21 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="@style/TextAppearance.Potok.Caption"
                 android:textColor="@color/accent_blue"
-                android:textStyle="bold"
                 android:visibility="gone" />
 
             <TextView
                 android:id="@+id/calChip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="8dp"
+                android:layout_marginLeft="@dimen/space_s"
                 android:background="@color/cal_bg"
                 android:textColor="@color/cal_text"
                 android:textAppearance="@style/TextAppearance.Potok.Caption"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
+                android:paddingLeft="@dimen/space_s"
+                android:paddingRight="@dimen/space_s"
                 android:paddingTop="3dp"
                 android:paddingBottom="3dp"
-                android:text="📅 В календаре"
+                android:text="⏰ Напоминание"
                 android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>

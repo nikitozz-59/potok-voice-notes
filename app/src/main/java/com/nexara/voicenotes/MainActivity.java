@@ -455,18 +455,12 @@ public class MainActivity extends Activity {
             }
 
             TextView icon = conv.findViewById(R.id.icon);
-            GradientDrawable d = new GradientDrawable();
-            d.setShape(GradientDrawable.RECTANGLE);
-            float corner = (viewType == 0 ? 10 : 8) * getResources().getDisplayMetrics().density;
-            d.setCornerRadius(corner);
+            // Тип — только emoji, без цветной подложки (цвета типов убраны).
             if (n.system) {
                 icon.setText("⚙");
-                d.setColor(ThemeManager.softBg(MainActivity.this));
             } else {
                 icon.setText(typeIcon(n.type));
-                d.setColor(typeBgColor(n.type));
             }
-            icon.setBackground(d);
 
             if (viewType == 0) {
                 // Крупная карточка: развитая мысль
@@ -1208,13 +1202,5 @@ public class MainActivity extends Activity {
         if ("list".equals(type)) return "📋";
         if ("note".equals(type)) return "📝";
         return "•";
-    }
-
-    private int typeBgColor(String type) {
-        if ("idea".equals(type)) return 0xFFFFFDE7;
-        if ("reminder".equals(type)) return 0xFFFFE0B2;
-        if ("task".equals(type)) return 0xFFF3E5F5;
-        if ("list".equals(type)) return 0xFFE0F7FA;
-        return 0xFFECEFF1; // note
     }
 }

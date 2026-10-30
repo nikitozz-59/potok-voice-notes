@@ -29,17 +29,4 @@
     <!-- Синхронизация: контейнер успеха убран (успех — норма), оставлены тона для ошибки. -->
     <color name="sync_bg">#EEF1F5</color>           <!-- фон полосы ошибки -->
     <color name="cal_bg">#E8F0FD</color>            <!-- = accent container -->
-
-    <!-- Цветовое кодирование типов — кандидат на удаление (шаг 4). Пока оставлены,
-         чтобы не ломать существующие ссылки; расходятся с принципом «тип = emoji». -->
-    <color name="type_note">#B0BEC5</color>
-    <color name="type_idea">#FFEA00</color>
-    <color name="type_list">#00E5FF</color>
-    <color name="type_reminder">#FF9100</color>
-    <color name="type_task">#D500F9</color>
-    <color name="type_note_bg">#ECEFF1</color>
-    <color name="type_idea_bg">#FFFDE7</color>
-    <color name="type_list_bg">#E0F7FA</color>
-    <color name="type_reminder_bg">#FFE0B2</color>
-    <color name="type_task_bg">#F3E5F5</color>
 </resources>
