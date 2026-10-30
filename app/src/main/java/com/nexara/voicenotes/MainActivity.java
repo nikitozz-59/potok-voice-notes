@@ -116,7 +116,7 @@ public class MainActivity extends Activity {
         syncBanner = findViewById(R.id.syncBanner);
 
         // Шапка: поиск + overflow (⋮). Чат, импорт, настройки, «только развитые» — в меню.
-        findViewById(R.id.searchBtn).setOnClickListener(v -> {
+        findViewById(R.id.searchField).setOnClickListener(v -> {
             startActivity(new Intent(this, SearchActivity.class));
         });
         findViewById(R.id.overflowBtn).setOnClickListener(v -> showOverflow());
@@ -340,12 +340,7 @@ public class MainActivity extends Activity {
             recPill.setBackground(pillBg);
         }
         styleChips();
-        if (syncBanner != null) {
-            GradientDrawable sb = new GradientDrawable();
-            sb.setShape(GradientDrawable.RECTANGLE);
-            sb.setColor(ThemeManager.softBg(this));
-            syncBanner.setBackground(sb);
-        }
+        // syncBanner — прозрачная тонкая строка; фон не нужен (иконка передаёт состояние цветом).
         updateSyncBanner();
         refresh();
     }
@@ -395,14 +390,11 @@ public class MainActivity extends Activity {
                 icon = "…";
                 iconColor = ThemeManager.accent(this);
             } else {
-                // Всё чисто — баннер не занимаeт место
-                problem = false;
-                text = "";
+                // Всё чисто — resting-статус «Синхронизировано» (зелёная галочка)
+                text = "Синхронизировано";
+                icon = "✓";
+                iconColor = getResources().getColor(R.color.sync_ok);
             }
-        }
-        if (!problem) {
-            syncBanner.setVisibility(View.GONE);
-            return;
         }
         syncBanner.setVisibility(View.VISIBLE);
         syncText.setText(text);
@@ -451,7 +443,10 @@ public class MainActivity extends Activity {
             }
 
             ImageView icon = conv.findViewById(R.id.icon);
-            // Тип — векторная иконка, монохромная (tint из layout = text_secondary).
+            // Плитка-тип: цвет заливки по типу, иконка белая (tint из layout).
+            int tileRes = n.system ? R.color.type_tile_system : typeTileColor(n.type);
+            icon.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                    getResources().getColor(tileRes)));
             if (n.system) {
                 icon.setImageResource(R.drawable.ic_settings);
             } else {
@@ -463,6 +458,9 @@ public class MainActivity extends Activity {
                 TextView titleV = conv.findViewById(R.id.title);
                 if (title.length() > 90) title = title.substring(0, 90) + "…";
                 titleV.setText(title);
+
+                TextView timeV = conv.findViewById(R.id.time);
+                timeV.setText(formatNoteTime(n.ts));
 
                 TextView prev = conv.findViewById(R.id.preview);
                 String preview;
@@ -518,7 +516,7 @@ public class MainActivity extends Activity {
                     timeV.setText(n.text);
                     timeV.setTextColor(ThemeManager.accent(MainActivity.this));
                 } else {
-                    timeV.setText(new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date(n.ts)));
+                    timeV.setText(formatNoteTime(n.ts));
                     timeV.setTextColor(ThemeManager.TEXT_SECONDARY);
                 }
             }
@@ -1106,6 +1104,34 @@ public class MainActivity extends Activity {
         if ("list".equals(type)) return R.drawable.ic_type_list;
         if ("note".equals(type)) return R.drawable.ic_type_note;
         return R.drawable.ic_type_note;
+    }
+
+    /** Цвет заливки плитки-типа (скруглённый квадрат под иконкой). */
+    static int typeTileColor(String type) {
+        if ("idea".equals(type)) return R.color.type_tile_idea;
+        if ("reminder".equals(type)) return R.color.type_tile_reminder;
+        if ("task".equals(type)) return R.color.type_tile_task;
+        if ("list".equals(type)) return R.color.type_tile_list;
+        if ("note".equals(type)) return R.color.type_tile_note;
+        return R.color.type_tile_note;
+    }
+
+    /** Относительное время для строки заметки: сегодня → HH:mm,
+     *  вчера → «Вчера», иначе → dd.MM. */
+    static String formatNoteTime(long ts) {
+        java.util.Calendar now = java.util.Calendar.getInstance();
+        java.util.Calendar then = java.util.Calendar.getInstance();
+        then.setTimeInMillis(ts);
+        if (now.get(java.util.Calendar.YEAR) == then.get(java.util.Calendar.YEAR)
+                && now.get(java.util.Calendar.DAY_OF_YEAR) == then.get(java.util.Calendar.DAY_OF_YEAR)) {
+            return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date(ts));
+        }
+        now.add(java.util.Calendar.DAY_OF_YEAR, -1);
+        if (now.get(java.util.Calendar.YEAR) == then.get(java.util.Calendar.YEAR)
+                && now.get(java.util.Calendar.DAY_OF_YEAR) == then.get(java.util.Calendar.DAY_OF_YEAR)) {
+            return "Вчера";
+        }
+        return new SimpleDateFormat("dd.MM", Locale.getDefault()).format(new Date(ts));
     }
 
     /** Emoji-префикс типа — только для RemoteViews (виджет), где ImageView

@@ -1,23 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Компактная строка заметки (одна строка). Плоская: без карточного фона,
-     без цветного облачка. Тип — только emoji. -->
+<!-- Компактная карточка заметки (одна строка). Белая, скруглённая.
+     Слева — цветная плитка-тип, затем заголовок и время справа. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:paddingLeft="@dimen/space_l"
-    android:paddingRight="@dimen/space_l"
     android:paddingTop="@dimen/space_s"
     android:paddingBottom="@dimen/space_s"
+    android:paddingLeft="@dimen/space_m"
+    android:paddingRight="@dimen/space_m"
+    android:background="@drawable/bg_card_note"
+    android:elevation="1dp"
     android:gravity="center_vertical">
 
     <ImageView
         android:id="@+id/icon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
         android:src="@drawable/ic_type_note"
-        android:tint="@color/text_secondary"
+        android:background="@drawable/bg_type_tile"
+        android:tint="@color/bg_card"
         android:scaleType="centerInside"
+        android:padding="4dp"
         android:contentDescription="Тип заметки" />
 
     <TextView

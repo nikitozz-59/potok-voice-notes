@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Плитка-тип: скруглённый квадрат. Заливка ставится per-type через
+     backgroundTintList в адаптере (белая по умолчанию). Иконка внутри — белая. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/bg_card" />
+    <corners android:radius="10dp" />
+</shape>

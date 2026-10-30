@@ -30,4 +30,17 @@
     <!-- Синхронизация: контейнер успеха убран (успех — норма), оставлены тона для ошибки. -->
     <color name="sync_bg">#EEF1F5</color>           <!-- фон полосы ошибки -->
     <color name="cal_bg">#E8F0FD</color>            <!-- = accent container -->
+
+    <!-- Строка синхронизации: resting-статус «Синхронизировано».
+         Отдельн от rec_green (зарезервирован под индикатор записи). -->
+    <color name="sync_ok">#00C853</color>
+
+    <!-- Плитки-типы заметок: скруглённый квадрат с заливкой + белая иконка.
+         Не используют зарезервированные rec_green/stop_red. -->
+    <color name="type_tile_note">#5B8DEF</color>
+    <color name="type_tile_idea">#FFB300</color>
+    <color name="type_tile_task">#26A69A</color>
+    <color name="type_tile_list">#7E57C2</color>
+    <color name="type_tile_reminder">#FF7043</color>
+    <color name="type_tile_system">#607D8B</color>
 </resources>
