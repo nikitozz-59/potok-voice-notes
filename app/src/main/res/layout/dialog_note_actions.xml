@@ -22,9 +22,8 @@
         android:paddingLeft="20dp"
         android:paddingRight="20dp"
         android:paddingBottom="8dp"
-        android:textSize="15sp"
+        android:textAppearance="@style/TextAppearance.Potok.Title"
         android:textColor="@color/text_primary"
-        android:textStyle="bold"
         android:maxLines="2"
         android:ellipsize="end" />
 

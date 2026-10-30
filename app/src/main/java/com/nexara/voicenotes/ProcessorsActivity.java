@@ -55,7 +55,7 @@ public class ProcessorsActivity extends Activity {
 
         TextView back = new TextView(this);
         back.setText("‹");
-        back.setTextSize(32);
+        back.setTextSize(32); // glyph-стрелка навигации, не текст — вне типошкалы
         back.setTextColor(ThemeManager.TEXT_PRIMARY);
         back.setPadding(0, 0, dp(12), 0);
         back.setOnClickListener(v -> finish());
@@ -63,7 +63,7 @@ public class ProcessorsActivity extends Activity {
 
         TextView title = new TextView(this);
         title.setText("Обработчики");
-        title.setTextSize(20);
+        title.setTextAppearance(this, R.style.TextAppearance_Potok_Headline);
         title.setTextColor(ThemeManager.TEXT_PRIMARY);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         header.addView(title);
@@ -73,7 +73,7 @@ public class ProcessorsActivity extends Activity {
         desc.setText("Свои роли для разбора заметок. Назовите и опишите рамки — "
                    + "например «Финаналитик»: «ты серьёзный финансовый аналитик, "
                    + "оцени с точки зрения выгоды и заработка».");
-        desc.setTextSize(13);
+        desc.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
         desc.setTextColor(ThemeManager.TEXT_SECONDARY);
         desc.setPadding(0, 0, 0, dp(14));
         root.addView(desc);
@@ -82,8 +82,7 @@ public class ProcessorsActivity extends Activity {
         Button addBtn = new Button(this);
         addBtn.setText("+ Новый обработчик");
         addBtn.setTextColor(0xFFFFFFFF);
-        addBtn.setTypeface(null, android.graphics.Typeface.BOLD);
-        addBtn.setTextSize(14);
+        addBtn.setTextAppearance(this, R.style.TextAppearance_Potok_Title);
         addBtn.setBackground(ThemeManager.accentButton(this, 14));
         LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, dp(46));
@@ -102,7 +101,7 @@ public class ProcessorsActivity extends Activity {
 
         emptyHint = new TextView(this);
         emptyHint.setText("Пока нет обработчиков.\nСоздайте первого — он появится облачком в заметке.");
-        emptyHint.setTextSize(13);
+        emptyHint.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
         emptyHint.setTextColor(ThemeManager.TEXT_SECONDARY);
         emptyHint.setGravity(Gravity.CENTER);
         emptyHint.setPadding(dp(16), dp(24), dp(16), dp(24));
@@ -157,7 +156,7 @@ public class ProcessorsActivity extends Activity {
 
         TextView name = new TextView(this);
         name.setText(p.name);
-        name.setTextSize(16);
+        name.setTextAppearance(this, R.style.TextAppearance_Potok_Title);
         name.setTextColor(ThemeManager.TEXT_PRIMARY);
         name.setTypeface(null, android.graphics.Typeface.BOLD);
         LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(
@@ -180,7 +179,7 @@ public class ProcessorsActivity extends Activity {
 
         TextView prompt = new TextView(this);
         prompt.setText(p.prompt);
-        prompt.setTextSize(13);
+        prompt.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
         prompt.setTextColor(0xFF555555);
         prompt.setPadding(dp(22), dp(6), 0, 0);
         card.addView(prompt);
@@ -203,7 +202,7 @@ public class ProcessorsActivity extends Activity {
         // ряд плашек цвета
         TextView colorLabel = new TextView(this);
         colorLabel.setText("Цвет облачка");
-        colorLabel.setTextSize(13);
+        colorLabel.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
         colorLabel.setTextColor(ThemeManager.TEXT_SECONDARY);
         form.addView(colorLabel);
 
@@ -243,7 +242,7 @@ public class ProcessorsActivity extends Activity {
         final EditText nameInput = new EditText(this);
         nameInput.setHint("Название (Финаналитик)");
         nameInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
-        nameInput.setTextSize(15);
+        nameInput.setTextAppearance(this, R.style.TextAppearance_Potok_Body);
         if (existing != null) nameInput.setText(existing.name);
         form.addView(nameInput);
 
@@ -252,7 +251,7 @@ public class ProcessorsActivity extends Activity {
         promptInput.setInputType(InputType.TYPE_CLASS_TEXT
             | InputType.TYPE_TEXT_FLAG_MULTI_LINE | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         promptInput.setMinLines(3);
-        promptInput.setTextSize(15);
+        promptInput.setTextAppearance(this, R.style.TextAppearance_Potok_Body);
         if (existing != null) promptInput.setText(existing.prompt);
         LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);

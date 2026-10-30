@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Типографическая шкала «Поток»: 4 стиля вместо 13 размеров.
+         В разметке/коде android:textSize и setTextSize запрещены —
+         только android:textAppearance / setTextAppearance.
+
+         Начертания: Regular и Medium. Bold убран — Medium на 16sp даёт
+         достаточный контраст, Bold «кричит» в заголовках списка.
+
+         Стиль НЕ задаёт textColor — это контролируется в layout через
+         android:textColor, чтобы цвет не «плыл» от Material-parent.
+         Базовый parent только ради lineSpacingExtra/textFontWeight.
+
+         android:textFontWeight требует API 28; minSdk 26 — на 26/27
+         fallback на sans-serif-medium через fontFamily. -->
+
+    <!-- Базовый стиль-родитель для иерархии TextAppearance.Potok.* (точки в имени
+         создают неявную иерархию — нужен корень, иначе aapt не найдёт родителя). -->
+    <style name="TextAppearance.Potok" parent="@android:style/TextAppearance">
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="TextAppearance.Potok.Headline">
+        <item name="android:textSize">22sp</item>
+        <item name="android:lineSpacingExtra">6dp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textFontWeight" tools:targetApi="28">500</item>
+    </style>
+
+    <style name="TextAppearance.Potok.Title">
+        <item name="android:textSize">16sp</item>
+        <item name="android:lineSpacingExtra">8dp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textFontWeight" tools:targetApi="28">500</item>
+    </style>
+
+    <style name="TextAppearance.Potok.Body">
+        <item name="android:textSize">14sp</item>
+        <item name="android:lineSpacingExtra">6dp</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="TextAppearance.Potok.Caption">
+        <item name="android:textSize">12sp</item>
+        <item name="android:lineSpacingExtra">4dp</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+</resources>

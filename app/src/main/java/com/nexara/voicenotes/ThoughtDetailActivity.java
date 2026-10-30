@@ -72,7 +72,7 @@ public class ThoughtDetailActivity extends Activity {
 
         TextView back = new TextView(this);
         back.setText("‹");
-        back.setTextSize(32);
+        back.setTextSize(32); // glyph-стрелка навигации, не текст — вне типошкалы
         back.setTextColor(0xFF121212);
         back.setPadding(0, 0, dp(12), 0);
         back.setOnClickListener(v -> finish());
@@ -80,7 +80,7 @@ public class ThoughtDetailActivity extends Activity {
 
         TextView hTitle = new TextView(this);
         hTitle.setText("Разобрать мысль");
-        hTitle.setTextSize(20);
+        hTitle.setTextAppearance(this, R.style.TextAppearance_Potok_Headline);
         hTitle.setTextColor(0xFF121212);
         hTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         header.addView(hTitle);
@@ -100,7 +100,7 @@ public class ThoughtDetailActivity extends Activity {
         String typeName = typeRu(note.type);
         String timeStr = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date(note.ts));
         metaView.setText(typeName + " · " + timeStr);
-        metaView.setTextSize(12);
+        metaView.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
         metaView.setTextColor(ThemeManager.accent(this));
         metaView.setTypeface(null, android.graphics.Typeface.BOLD);
         thoughtCard.addView(metaView);
@@ -115,7 +115,7 @@ public class ThoughtDetailActivity extends Activity {
                 if (!off.isEmpty()) chip += "  ·  напомнить " + off;
                 TextView eventChip = new TextView(this);
                 eventChip.setText(chip);
-                eventChip.setTextSize(12);
+                eventChip.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
                 eventChip.setTextColor(0xFF2C6FE8);
                 eventChip.setTypeface(null, android.graphics.Typeface.BOLD);
                 eventChip.setPadding(0, dp(6), 0, 0);
@@ -128,7 +128,7 @@ public class ThoughtDetailActivity extends Activity {
         String content = (note.summary != null && !note.summary.isEmpty())
             ? note.summary : (note.text != null ? note.text : "");
         contentView.setText(content);
-        contentView.setTextSize(16);
+        contentView.setTextAppearance(this, R.style.TextAppearance_Potok_Body);
         contentView.setTextColor(0xFF121212);
         contentView.setPadding(0, dp(8), 0, 0);
         thoughtCard.addView(contentView);
@@ -136,7 +136,7 @@ public class ThoughtDetailActivity extends Activity {
         if (note.text != null && !note.text.equals(content)) {
             TextView fullText = new TextView(this);
             fullText.setText(note.text);
-            fullText.setTextSize(13);
+            fullText.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
             fullText.setTextColor(0xFF757575);
             fullText.setPadding(0, dp(8), 0, 0);
             thoughtCard.addView(fullText);
@@ -222,7 +222,7 @@ public class ThoughtDetailActivity extends Activity {
         // Связи
         TextView linksTitle = new TextView(this);
         linksTitle.setText("Связи");
-        linksTitle.setTextSize(15);
+        linksTitle.setTextAppearance(this, R.style.TextAppearance_Potok_Title);
         linksTitle.setTextColor(ThemeManager.accent(this));
         linksTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         linksTitle.setPadding(0, dp(20), 0, dp(8));
@@ -235,7 +235,7 @@ public class ThoughtDetailActivity extends Activity {
         // Цепочка мыслей
         TextView childrenTitle = new TextView(this);
         childrenTitle.setText("Цепочка мыслей");
-        childrenTitle.setTextSize(15);
+        childrenTitle.setTextAppearance(this, R.style.TextAppearance_Potok_Title);
         childrenTitle.setTextColor(ThemeManager.accent(this));
         childrenTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         childrenTitle.setPadding(0, dp(20), 0, dp(8));
@@ -260,7 +260,7 @@ public class ThoughtDetailActivity extends Activity {
     private Button makeButton(String text, View.OnClickListener listener) {
         Button btn = new Button(this);
         btn.setText(text);
-        btn.setTextSize(14);
+        btn.setTextAppearance(this, R.style.TextAppearance_Potok_Body);
         btn.setTextColor(ThemeManager.accent(this));
         btn.setTypeface(null, android.graphics.Typeface.BOLD);
         android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
@@ -293,7 +293,7 @@ public class ThoughtDetailActivity extends Activity {
 
         TextView label = new TextView(this);
         label.setText("Обработчики");
-        label.setTextSize(15);
+        label.setTextAppearance(this, R.style.TextAppearance_Potok_Title);
         label.setTextColor(ThemeManager.accent(this));
         label.setTypeface(null, android.graphics.Typeface.BOLD);
         label.setPadding(0, dp(20), 0, dp(8));
@@ -306,7 +306,7 @@ public class ThoughtDetailActivity extends Activity {
             int color = p.color != 0 ? p.color : Processor.colorForIndex(idx);
             TextView cloud = new TextView(this);
             cloud.setText(p.name);
-            cloud.setTextSize(13);
+            cloud.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
             cloud.setTextColor(ThemeManager.onColor(color));
             cloud.setTypeface(null, android.graphics.Typeface.BOLD);
             cloud.setGravity(android.view.Gravity.CENTER);
@@ -572,14 +572,13 @@ public class ThoughtDetailActivity extends Activity {
 
         TextView t = new TextView(this);
         t.setText(title);
-        t.setTextSize(13);
+        t.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
         t.setTextColor(ThemeManager.accent(this));
-        t.setTypeface(null, android.graphics.Typeface.BOLD);
         card.addView(t);
 
         TextView c = new TextView(this);
         c.setText(content);
-        c.setTextSize(15);
+        c.setTextAppearance(this, R.style.TextAppearance_Potok_Body);
         c.setTextColor(0xFF121212);
         c.setPadding(0, dp(8), 0, 0);
         card.addView(c);
@@ -593,7 +592,7 @@ public class ThoughtDetailActivity extends Activity {
         if (children.isEmpty()) {
             TextView empty = new TextView(this);
             empty.setText("Пока нет развитых мыслей. Нажмите «Развить» или «Собрать цепочку».");
-            empty.setTextSize(13);
+            empty.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
             empty.setTextColor(0xFF999999);
             childrenContainer.addView(empty);
             return;
@@ -604,7 +603,7 @@ public class ThoughtDetailActivity extends Activity {
             String title = child.summary != null && !child.summary.isEmpty() ? child.summary : child.text;
             if (title == null) title = "";
             tv.setText((mine ? "Вы: " : "") + (title.length() > 80 ? title.substring(0, 80) + "…" : title));
-            tv.setTextSize(13);
+            tv.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
             tv.setTextColor(0xFF333333);
             tv.setBackgroundColor(0xFFFFFFFF);
             // Свои блоки — акцентная полоса слева (палитра B)
@@ -662,7 +661,7 @@ public class ThoughtDetailActivity extends Activity {
             TextView tv = new TextView(this);
             tv.setText("Пока нет. Появляются сами при сохранении новых мыслей "
                 + "или по кнопке «Найти связи».");
-            tv.setTextSize(12);
+            tv.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
             tv.setTextColor(0xFF888888);
             linksContainer.addView(tv);
             return;
@@ -694,7 +693,7 @@ public class ThoughtDetailActivity extends Activity {
             StringBuilder t = new StringBuilder("↔ ").append(otherTitle);
             if (!reason.isEmpty()) t.append("\n     почему: ").append(reason);
             tv.setText(t);
-            tv.setTextSize(13);
+            tv.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
             tv.setTextColor(0xFF333333);
             LinearLayout.LayoutParams tvLp = new LinearLayout.LayoutParams(
                 0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
@@ -703,7 +702,7 @@ public class ThoughtDetailActivity extends Activity {
 
             TextView del = new TextView(this);
             del.setText("✕");
-            del.setTextSize(16);
+            del.setTextSize(16); // glyph-иконка удаления, не текст — вне типошкалы
             del.setTextColor(0xFFD32F2F);
             del.setPadding(dp(8), dp(4), dp(8), dp(4));
             del.setOnClickListener(v -> {

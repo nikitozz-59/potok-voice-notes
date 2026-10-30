@@ -61,9 +61,8 @@ public class ChatActivity extends Activity {
         // === Header ===
         TextView header = new TextView(this);
         header.setText("💬 Чат с LLM");
-        header.setTextSize(20);
+        header.setTextAppearance(this, R.style.TextAppearance_Potok_Headline);
         header.setTextColor(0xFF121212);
-        header.setTypeface(null, android.graphics.Typeface.BOLD);
         int p = dp(16);
         header.setPadding(p, p, p, dp(4));
         root.addView(header);
@@ -71,9 +70,8 @@ public class ChatActivity extends Activity {
         // Кнопка «Зафиксировать» — справа в шапке
         TextView fixBtn = new TextView(this);
         fixBtn.setText("Зафиксировать");
-        fixBtn.setTextSize(14);
+        fixBtn.setTextAppearance(this, R.style.TextAppearance_Potok_Body);
         fixBtn.setTextColor(ThemeManager.accent(this));
-        fixBtn.setTypeface(null, android.graphics.Typeface.BOLD);
         int fbP = dp(10);
         fixBtn.setPadding(fbP, dp(6), fbP, dp(6));
         GradientDrawable fbBg = new GradientDrawable();
@@ -103,7 +101,7 @@ public class ChatActivity extends Activity {
             TextView seed = new TextView(this);
             seed.setText("Обсуждаем заметку:\n" + (seedText.length() > 120
                 ? seedText.substring(0, 117) + "…" : seedText));
-            seed.setTextSize(12);
+            seed.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
             seed.setTextColor(0xFF888888);
             seed.setPadding(p, 0, p, dp(8));
             root.addView(seed);
@@ -126,7 +124,7 @@ public class ChatActivity extends Activity {
 
         input = new EditText(this);
         input.setHint("Спросите, обсудите, сформулируйте…");
-        input.setTextSize(15);
+        input.setTextAppearance(this, R.style.TextAppearance_Potok_Body);
         input.setBackgroundColor(0xFFFFFFFF);
         GradientDrawable inBg = new GradientDrawable();
         inBg.setShape(GradientDrawable.RECTANGLE);
@@ -141,7 +139,7 @@ public class ChatActivity extends Activity {
 
         TextView sendBtn = new TextView(this);
         sendBtn.setText("➤");
-        sendBtn.setTextSize(20);
+        sendBtn.setTextAppearance(this, R.style.TextAppearance_Potok_Headline);
         sendBtn.setTextColor(Color.WHITE);
         int sbP = dp(12);
         sendBtn.setPadding(sbP, dp(10), sbP, dp(10));
@@ -164,7 +162,7 @@ public class ChatActivity extends Activity {
         // Прогресс
         progressText = new TextView(this);
         progressText.setText("Думаю…");
-        progressText.setTextSize(12);
+        progressText.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
         progressText.setTextColor(0xFF888888);
         progressText.setVisibility(View.GONE);
         messagesLayout.addView(progressText);
@@ -288,7 +286,7 @@ public class ChatActivity extends Activity {
     private void addBubble(String who, String text) {
         if (progressText != null) progressText.setVisibility(View.GONE);
         TextView b = new TextView(this);
-        b.setTextSize(15);
+        b.setTextAppearance(this, R.style.TextAppearance_Potok_Body);
         b.setLineSpacing(0, 1.05f);
         int hp = dp(12), vp = dp(8);
         b.setPadding(hp, vp, hp, vp);
@@ -308,7 +306,7 @@ public class ChatActivity extends Activity {
             lp.setMargins(dp(40), dp(4), 0, dp(4));
         } else if ("error".equals(who)) {
             b.setTextColor(0xFFFF1744);
-            b.setTextSize(13);
+            b.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
             GradientDrawable bg = new GradientDrawable();
             bg.setShape(GradientDrawable.RECTANGLE);
             bg.setCornerRadius(dp(10));

@@ -29,9 +29,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Поток"
-            android:textColor="#111827"
-            android:textSize="15sp"
-            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:textAppearance="@style/TextAppearance.Potok.Title"
             android:maxLines="1"
             android:ellipsize="end" />
 
@@ -41,8 +40,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="Нажмите для быстрой записи"
-            android:textColor="#6B7280"
-            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:textAppearance="@style/TextAppearance.Potok.Caption"
             android:maxLines="1"
             android:ellipsize="end" />
     </LinearLayout>

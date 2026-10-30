@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F7F9FC">
+    android:background="@color/bg_app">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,16 +14,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Nexara (STT)"
-            android:textSize="13sp"
+            android:textAppearance="@style/TextAppearance.Potok.Title"
             android:textColor="@color/primary"
-            android:textStyle="bold"
             android:paddingBottom="6dp" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="API-ключ Nexara хранится только на телефоне."
-            android:textSize="12sp"
+            android:textAppearance="@style/TextAppearance.Potok.Caption"
             android:textColor="@color/text_secondary"
             android:paddingBottom="6dp" />
 
@@ -33,7 +32,7 @@
             android:layout_height="wrap_content"
             android:hint="@string/key_hint"
             android:inputType="textVisiblePassword"
-            android:textSize="14sp"
+            android:textAppearance="@style/TextAppearance.Potok.Body"
             android:fontFamily="monospace" />
 
         <TextView
@@ -41,15 +40,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             android:text="Альтернативный STT (OpenAI-совместимый Whisper)"
-            android:textSize="13sp"
-            android:textColor="@color/primary"
-            android:textStyle="bold" />
+            android:textAppearance="@style/TextAppearance.Potok.Title"
+            android:textColor="@color/primary" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Если Nexara недоступен — можно использовать Groq, OpenAI или другой Whisper-совместимый endpoint. Оставьте пустым для использования Nexara."
-            android:textSize="12sp"
+            android:textAppearance="@style/TextAppearance.Potok.Caption"
             android:textColor="@color/text_secondary"
             android:paddingBottom="6dp" />
 
@@ -57,7 +55,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Провайдер (nexara или openai)"
-            android:textSize="12sp" />
+            android:textAppearance="@style/TextAppearance.Potok.Caption" />
 
         <EditText
             android:id="@+id/sttProviderInput"
@@ -65,14 +63,14 @@
             android:layout_height="wrap_content"
             android:hint="nexara"
             android:inputType="text"
-            android:textSize="14sp" />
+            android:textAppearance="@style/TextAppearance.Potok.Body" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:text="Base URL (если openai)"
-            android:textSize="12sp" />
+            android:textAppearance="@style/TextAppearance.Potok.Caption" />
 
         <EditText
             android:id="@+id/sttBaseUrlInput"
@@ -80,14 +78,14 @@
             android:layout_height="wrap_content"
             android:hint="https://api.groq.com/openai/v1"
             android:inputType="textUri"
-            android:textSize="14sp" />
+            android:textAppearance="@style/TextAppearance.Potok.Body" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:text="Модель (если openai)"
-            android:textSize="12sp" />
+            android:textAppearance="@style/TextAppearance.Potok.Caption" />
 
         <EditText
             android:id="@+id/sttModelInput"
@@ -95,14 +93,14 @@
             android:layout_height="wrap_content"
             android:hint="whisper-large-v3"
             android:inputType="text"
-            android:textSize="14sp" />
+            android:textAppearance="@style/TextAppearance.Potok.Body" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:text="API-ключ (если openai)"
-            android:textSize="12sp" />
+            android:textAppearance="@style/TextAppearance.Potok.Caption" />
 
         <EditText
             android:id="@+id/sttKeyInput"
@@ -110,7 +108,7 @@
             android:layout_height="wrap_content"
             android:hint=""
             android:inputType="textVisiblePassword"
-            android:textSize="14sp"
+            android:textAppearance="@style/TextAppearance.Potok.Body"
             android:fontFamily="monospace" />
 
         <TextView
@@ -118,15 +116,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:text="LLM (ИИ-извлечение)"
-            android:textSize="13sp"
-            android:textColor="@color/primary"
-            android:textStyle="bold" />
+            android:textAppearance="@style/TextAppearance.Potok.Title"
+            android:textColor="@color/primary" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Для типизации заметки и извлечения даты напоминания."
-            android:textSize="12sp"
+            android:textAppearance="@style/TextAppearance.Potok.Caption"
             android:textColor="@color/text_secondary"
             android:paddingBottom="6dp" />
 
@@ -134,7 +131,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Base URL (OpenAI-совместимый)"
-            android:textSize="12sp" />
+            android:textAppearance="@style/TextAppearance.Potok.Caption" />
 
         <EditText
             android:id="@+id/llmBaseUrlInput"
@@ -142,14 +139,14 @@
             android:layout_height="wrap_content"
             android:hint="https://plusvibeapi.ru/v1"
             android:inputType="textUri"
-            android:textSize="14sp" />
+            android:textAppearance="@style/TextAppearance.Potok.Body" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:text="Модель"
-            android:textSize="12sp" />
+            android:textAppearance="@style/TextAppearance.Potok.Caption" />
 
         <EditText
             android:id="@+id/llmModelInput"
@@ -157,14 +154,14 @@
             android:layout_height="wrap_content"
             android:hint="z-ai/glm-5.2"
             android:inputType="text"
-            android:textSize="14sp" />
+            android:textAppearance="@style/TextAppearance.Potok.Body" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:text="API-ключ"
-            android:textSize="12sp" />
+            android:textAppearance="@style/TextAppearance.Potok.Caption" />
 
         <EditText
             android:id="@+id/llmKeyInput"
@@ -172,7 +169,7 @@
             android:layout_height="wrap_content"
             android:hint=""
             android:inputType="textVisiblePassword"
-            android:textSize="14sp"
+            android:textAppearance="@style/TextAppearance.Potok.Body"
             android:fontFamily="monospace" />
 
         <Button
@@ -198,7 +195,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:textSize="14sp"
+            android:textAppearance="@style/TextAppearance.Potok.Body"
             android:textColor="@color/text_secondary" />
     </LinearLayout>
 </ScrollView>

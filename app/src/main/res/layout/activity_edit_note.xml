@@ -29,9 +29,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginLeft="8dp"
-            android:textSize="18sp"
+            android:textAppearance="@style/TextAppearance.Potok.Title"
             android:textColor="@color/text_primary"
-            android:textStyle="bold"
             android:text="Правка заметки" />
 
         <Button
@@ -58,7 +57,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Заголовок (summary)"
-                android:textSize="12sp"
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
                 android:textColor="@color/text_secondary" />
 
             <EditText
@@ -68,7 +67,7 @@
                 android:layout_marginTop="4dp"
                 android:background="@drawable/bg_card"
                 android:padding="12dp"
-                android:textSize="15sp"
+                android:textAppearance="@style/TextAppearance.Potok.Body"
                 android:textColor="@color/text_primary"
                 android:inputType="textCapSentences"
                 android:hint="Краткая суть" />
@@ -78,7 +77,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="Текст"
-                android:textSize="12sp"
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
                 android:textColor="@color/text_secondary" />
 
             <EditText
@@ -90,7 +89,7 @@
                 android:gravity="top"
                 android:background="@drawable/bg_card"
                 android:padding="12dp"
-                android:textSize="15sp"
+                android:textAppearance="@style/TextAppearance.Potok.Body"
                 android:textColor="@color/text_primary"
                 android:inputType="textMultiLine|textCapSentences"
                 android:hint="Полный текст заметки" />

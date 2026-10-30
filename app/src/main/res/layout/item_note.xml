@@ -13,7 +13,7 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:gravity="center"
-        android:textSize="20sp"
+        android:textAppearance="@style/TextAppearance.Potok.Headline"
         android:text="•" />
 
     <LinearLayout
@@ -27,9 +27,8 @@
             android:id="@+id/title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textAppearance="@style/TextAppearance.Potok.Title"
             android:textColor="@color/text_primary"
-            android:textStyle="bold"
             android:maxLines="2"
             android:ellipsize="end" />
 
@@ -38,7 +37,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="3dp"
-            android:textSize="14sp"
+            android:textAppearance="@style/TextAppearance.Potok.Body"
             android:textColor="@color/text_secondary"
             android:maxLines="2"
             android:ellipsize="end" />
@@ -53,7 +52,7 @@
                 android:id="@+id/devMeta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
                 android:textColor="@color/accent_blue"
                 android:textStyle="bold"
                 android:visibility="gone" />
@@ -65,7 +64,7 @@
                 android:layout_marginLeft="8dp"
                 android:background="@color/cal_bg"
                 android:textColor="@color/cal_text"
-                android:textSize="12sp"
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
                 android:paddingLeft="8dp"
                 android:paddingRight="8dp"
                 android:paddingTop="3dp"

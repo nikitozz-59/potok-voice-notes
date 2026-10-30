@@ -51,7 +51,7 @@ public class SearchActivity extends Activity {
         // Header
         TextView header = new TextView(this);
         header.setText("🔍 Поиск");
-        header.setTextSize(22);
+        header.setTextAppearance(this, R.style.TextAppearance_Potok_Headline);
         header.setTextColor(0xFF121212);
         header.setTypeface(null, android.graphics.Typeface.BOLD);
         header.setPadding(dp(16), dp(16), dp(16), dp(8));
@@ -60,7 +60,7 @@ public class SearchActivity extends Activity {
         // Search input
         searchInput = new EditText(this);
         searchInput.setHint("Поиск по тексту, саммари…");
-        searchInput.setTextSize(15);
+        searchInput.setTextAppearance(this, R.style.TextAppearance_Potok_Body);
         searchInput.setBackgroundColor(0xFFFFFFFF);
         searchInput.setPadding(dp(12), dp(10), dp(12), dp(10));
         LinearLayout.LayoutParams searchLp = new LinearLayout.LayoutParams(
@@ -81,7 +81,7 @@ public class SearchActivity extends Activity {
         for (int i = 0; i < FILTER_NAMES.length; i++) {
             TextView chip = new TextView(this);
             chip.setText(FILTER_NAMES[i]);
-            chip.setTextSize(13);
+            chip.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
             chip.setPadding(dp(12), dp(6), dp(12), dp(6));
             final int idx = i;
             chip.setOnClickListener(v -> { filterIdx = idx; styleChips(); doFilter(); });
@@ -92,7 +92,7 @@ public class SearchActivity extends Activity {
 
         // Results count
         resultsCount = new TextView(this);
-        resultsCount.setTextSize(12);
+        resultsCount.setTextAppearance(this, R.style.TextAppearance_Potok_Caption);
         resultsCount.setTextColor(0xFF888888);
         resultsCount.setPadding(dp(16), dp(4), dp(16), dp(4));
         root.addView(resultsCount);

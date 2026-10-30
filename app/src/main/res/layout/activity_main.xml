@@ -23,9 +23,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textSize="28sp"
+                android:textAppearance="@style/TextAppearance.Potok.Headline"
                 android:textColor="@color/text_primary"
-                android:textStyle="bold"
                 android:text="Поток" />
 
             <ImageButton
@@ -81,7 +80,7 @@
                 android:id="@+id/syncIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="16sp"
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
                 android:textColor="@color/cal_text"
                 android:text="✓" />
 
@@ -90,7 +89,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="8dp"
-                android:textSize="13sp"
+                android:textAppearance="@style/TextAppearance.Potok.Caption"
                 android:textColor="@color/sync_blue"
                 android:text="Синхронизировано" />
         </LinearLayout>
@@ -134,7 +133,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:text="🎤 Скажите заметку на часах\nили нажмите микрофон"
-                android:textSize="16sp"
+                android:textAppearance="@style/TextAppearance.Potok.Title"
                 android:textColor="@color/text_secondary"
                 android:gravity="center"
                 android:padding="32dp"

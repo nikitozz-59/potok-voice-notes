@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:layout_marginLeft="8dp"
-        android:textSize="16sp"
+        android:textAppearance="@style/TextAppearance.Potok.Body"
         android:textColor="@color/text_primary"
         android:lineSpacingExtra="2dp" />
 </LinearLayout>

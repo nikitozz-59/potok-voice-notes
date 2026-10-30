@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Сетка 4dp. Все отступы/радиусы — отсюда, не из головы. -->
+    <dimen name="space_xs">4dp</dimen>
+    <dimen name="space_s">8dp</dimen>
+    <dimen name="space_m">12dp</dimen>
+    <dimen name="space_l">16dp</dimen>
+    <dimen name="space_xl">24dp</dimen>
+    <dimen name="space_xxl">32dp</dimen>
+
+    <!-- Радиусы — три значения (правило аналитика). -->
+    <dimen name="radius_s">8dp</dimen>     <!-- поля ввода, кнопки, карточки цитат -->
+    <dimen name="radius_m">16dp</dimen>    <!-- шторки, диалоги -->
+    <dimen name="radius_chip">16dp</dimen> <!-- полный круг при высоте 32dp -->
+
+    <!-- Touch-target ≥ 48dp даже для мелкой иконки. -->
+    <dimen name="touch_target">48dp</dimen>
+    <dimen name="icon_sm">24dp</dimen>
+    <dimen name="icon_md">32dp</dimen>
+    <dimen name="fab_size">56dp</dimen>
+
+    <!-- Боковое поле экрана. -->
+    <dimen name="screen_padding">@dimen/space_l</dimen>
+</resources>

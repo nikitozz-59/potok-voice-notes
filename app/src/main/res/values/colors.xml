@@ -1,25 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_bg">#1A73E8</color>
+    <!-- Зарезервированные цвета — только для своих ролей, тема их не трогает. -->
+    <color name="rec_green">#00E676</color>   <!-- индикатор идущей записи -->
+    <color name="stop_red">#FF1744</color>    <!-- кнопка стоп записи -->
+    <color name="error">#FF1744</color>       <!-- = stop_red; не для удаления -->
+
+    <!-- Акцент — один на приложение. Контейнер акцента — его светлый тон. -->
+    <color name="ic_bg">#2C6FE8</color>
     <color name="primary">#2C6FE8</color>
     <color name="primary_dark">#1E5BC6</color>
     <color name="accent">#2C6FE8</color>
-    <color name="rec_green">#00E676</color>
-    <color name="stop_red">#FF1744</color>
     <color name="sync_blue">#2C6FE8</color>
-    <color name="sync_bg">#E8F0FE</color>
-    <color name="cal_bg">#E8F0FE</color>
     <color name="cal_text">#2C6FE8</color>
-    <color name="text_primary">#121212</color>
-    <color name="text_secondary">#8E939A</color>
-    <color name="divider">#E0E0E0</color>
-    <color name="bg_app">#F7F9FC</color>
-    <color name="bg_card">#FFFFFF</color>
-    <color name="chip_border">#E0E0E0</color>
     <color name="chip_sel_bg">#2C6FE8</color>
-    <color name="error">#FF1744</color>
     <color name="accent_blue">#2C6FE8</color>
-    <color name="accent_blue_soft">#E8F0FE</color>
+    <color name="accent_blue_soft">#E8F0FD</color> <!-- контейнер: выбранный чип, активное состояние -->
+
+    <!-- Нейтральная палитра вокруг акцента. -->
+    <color name="bg_app">#F7F8FA</color>            <!-- фон экрана -->
+    <color name="bg_card">#FFFFFF</color>           <!-- поверхность: строки, шторки -->
+    <color name="potok_surface_secondary">#EEF1F5</color> <!-- плашки, фон поля ввода -->
+    <color name="text_primary">#1A1C1F</color>
+    <color name="text_secondary">#5F6672</color>
+    <color name="potok_text_disabled">#A1A7B3</color>
+    <color name="divider">#E1E4EA</color>
+    <color name="chip_border">#E1E4EA</color>       <!-- = divider -->
+
+    <!-- Синхронизация: контейнер успеха убран (успех — норма), оставлены тона для ошибки. -->
+    <color name="sync_bg">#EEF1F5</color>           <!-- фон полосы ошибки -->
+    <color name="cal_bg">#E8F0FD</color>            <!-- = accent container -->
+
+    <!-- Цветовое кодирование типов — кандидат на удаление (шаг 4). Пока оставлены,
+         чтобы не ломать существующие ссылки; расходятся с принципом «тип = emoji». -->
     <color name="type_note">#B0BEC5</color>
     <color name="type_idea">#FFEA00</color>
     <color name="type_list">#00E5FF</color>

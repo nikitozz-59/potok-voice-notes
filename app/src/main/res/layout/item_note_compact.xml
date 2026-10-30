@@ -16,7 +16,7 @@
         android:layout_width="28dp"
         android:layout_height="28dp"
         android:gravity="center"
-        android:textSize="14sp"
+        android:textAppearance="@style/TextAppearance.Potok.Body"
         android:text="•" />
 
     <TextView
@@ -25,7 +25,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:layout_marginLeft="10dp"
-        android:textSize="14sp"
+        android:textAppearance="@style/TextAppearance.Potok.Body"
         android:textColor="@color/text_primary"
         android:maxLines="1"
         android:ellipsize="end" />
@@ -35,6 +35,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="8dp"
-        android:textSize="11sp"
+        android:textAppearance="@style/TextAppearance.Potok.Caption"
         android:textColor="@color/text_secondary" />
 </LinearLayout>

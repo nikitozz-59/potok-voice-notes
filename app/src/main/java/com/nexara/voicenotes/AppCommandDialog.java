@@ -91,14 +91,13 @@ public class AppCommandDialog extends Dialog {
 
         TextView hint = new TextView(ctx);
         hint.setText("Скажите, что изменить");
-        hint.setTextSize(17);
-        hint.setTypeface(null, android.graphics.Typeface.BOLD);
+        hint.setTextAppearance(ctx, R.style.TextAppearance_Potok_Title);
         hint.setTextColor(ThemeManager.TEXT_PRIMARY);
         root.addView(hint);
 
         TextView sub = new TextView(ctx);
         sub.setText("Напишите или зажмите микрофон и скажите вслух");
-        sub.setTextSize(12);
+        sub.setTextAppearance(ctx, R.style.TextAppearance_Potok_Caption);
         sub.setTextColor(ThemeManager.TEXT_SECONDARY);
         sub.setPadding(0, dp(4), 0, dp(10));
         root.addView(sub);
@@ -118,7 +117,7 @@ public class AppCommandDialog extends Dialog {
         root.addView(progress);
 
         status = new TextView(ctx);
-        status.setTextSize(12);
+        status.setTextAppearance(ctx, R.style.TextAppearance_Potok_Caption);
         status.setTextColor(ThemeManager.TEXT_SECONDARY);
         status.setGravity(Gravity.CENTER);
         status.setPadding(0, dp(2), 0, dp(2));
@@ -137,7 +136,7 @@ public class AppCommandDialog extends Dialog {
         input.setHint("Что поменять?");
         input.setHintTextColor(ThemeManager.TEXT_SECONDARY);
         input.setTextColor(ThemeManager.TEXT_PRIMARY);
-        input.setTextSize(16);
+        input.setTextAppearance(ctx, R.style.TextAppearance_Potok_Title);
         input.setSingleLine(true);
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         input.setImeOptions(EditorInfo.IME_ACTION_SEND);
@@ -160,7 +159,7 @@ public class AppCommandDialog extends Dialog {
         // микрофон: зажать — говорите, отпустить — применить
         micView = new TextView(ctx);
         micView.setText("⏺");
-        micView.setTextSize(24);
+        micView.setTextSize(24); // glyph-иконка записи, не текст — вне типошкалы
         micView.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(dp(56), dp(56));
         mlp.leftMargin = dp(10);
@@ -318,7 +317,7 @@ public class AppCommandDialog extends Dialog {
     private void addLine(String text, int color, boolean isUser) {
         TextView tv = new TextView(ctx);
         tv.setText((isUser ? "вы: " : "поток: ") + text);
-        tv.setTextSize(14);
+        tv.setTextAppearance(ctx, R.style.TextAppearance_Potok_Body);
         tv.setTextColor(color);
         if (!isUser) tv.setTypeface(null, android.graphics.Typeface.BOLD);
         tv.setPadding(0, dp(4), 0, dp(3));

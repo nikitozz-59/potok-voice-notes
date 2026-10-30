@@ -235,7 +235,7 @@ public class MainActivity extends Activity {
         for (int i = 0; i < FILTER_NAMES.length; i++) {
             TextView chip = new TextView(this);
             chip.setText(FILTER_NAMES[i]);
-            chip.setTextSize(14);
+            chip.setTextAppearance(this, R.style.TextAppearance_Potok_Body);
             chip.setPadding((int) (16 * density), (int) (8 * density), (int) (16 * density), (int) (8 * density));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -640,7 +640,7 @@ public class MainActivity extends Activity {
     private void addSheetRow(LinearLayout box, String text, int color, View.OnClickListener l) {
         TextView row = new TextView(this);
         row.setText(text);
-        row.setTextSize(15);
+        row.setTextAppearance(this, R.style.TextAppearance_Potok_Body);
         row.setTextColor(color);
         float density = getResources().getDisplayMetrics().density;
         row.setPadding((int) (20 * density), (int) (13 * density),
