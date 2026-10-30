@@ -21,6 +21,16 @@ public interface LlmProvider {
     LlmExtractor.Struct extract(String transcript) throws Exception;
 
     /**
+     * Multi-turn диалог: послать историю (system + user/assistant ...) → текст ответа.
+     * Отличие от extract(): возвращает чистый текст (свободный разговор, без JSON-структуры).
+     *
+     * @param messages история: [system, user, assistant, user, ...] — full context.
+     * @return ответ ассистента (чистый текст).
+     * @throws Exception при ошибке (сеть, авторизация, невалидный ответ).
+     */
+    String chat(java.util.List<ChatMessage> messages, String systemPrompt) throws Exception;
+
+    /**
      * Человекочитаемое имя провайдера (для логов и UI).
      */
     String getName();

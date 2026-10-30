@@ -105,6 +105,65 @@ public class OpenAiLlmProvider implements LlmProvider {
         return "openai-llm (" + model + ")";
     }
 
+    @Override
+    public String chat(java.util.List<ChatMessage> messages, String systemPrompt) throws Exception {
+        if (messages == null || messages.isEmpty()) {
+            throw new Exception("empty chat messages");
+        }
+
+        Log.i(TAG, "chat " + messages.size() + " msgs via " + model);
+
+        HttpURLConnection c = null;
+        try {
+            c = (HttpURLConnection) new URL(baseUrl + "/chat/completions").openConnection();
+            c.setDoOutput(true);
+            c.setRequestMethod("POST");
+            c.setRequestProperty("Authorization", "Bearer " + apiKey);
+            c.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+            c.setRequestProperty("Accept", "application/json");
+            c.setConnectTimeout(10000);
+            c.setReadTimeout(30000);
+
+            JSONObject req = new JSONObject();
+            req.put("model", model);
+            req.put("temperature", 0.7); // диалог — чуть креативнее, чем структура
+            JSONArray msgs = new JSONArray();
+            if (systemPrompt != null && !systemPrompt.isEmpty()) {
+                msgs.put(new JSONObject().put("role", "system").put("content", systemPrompt));
+            }
+            for (ChatMessage m : messages) {
+                msgs.put(new JSONObject().put("role", m.role).put("content", m.content));
+            }
+            req.put("messages", msgs);
+
+            OutputStream os = c.getOutputStream();
+            os.write(req.toString().getBytes(StandardCharsets.UTF_8));
+            os.flush();
+            os.close();
+
+            int code = c.getResponseCode();
+            InputStream is = (code >= 200 && code < 300) ? c.getInputStream() : c.getErrorStream();
+            String body = new String(readAll(is), StandardCharsets.UTF_8);
+            if (code != 200) {
+                throw new Exception("LLM HTTP " + code + ": " + body.substring(0, Math.min(body.length(), 200)));
+            }
+
+            JSONObject resp = new JSONObject(body);
+            JSONArray choices = resp.optJSONArray("choices");
+            if (choices == null || choices.length() == 0) {
+                throw new Exception("LLM: no choices in response");
+            }
+            String content = choices.getJSONObject(0).getJSONObject("message").optString("content", "");
+            if (content == null || content.trim().isEmpty()) {
+                throw new Exception("LLM returned empty chat response");
+            }
+            return content.trim();
+
+        } finally {
+            if (c != null) c.disconnect();
+        }
+    }
+
     private static byte[] readAll(InputStream is) throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         if (is == null) return bos.toByteArray();
