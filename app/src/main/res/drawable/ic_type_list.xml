@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Тип: список (пункты). Outline-стиль: точки-кружки + линии. -->
+<!-- Lucide «list» — пункты списка. Outline. Тип: список. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
@@ -7,9 +7,9 @@
     android:viewportHeight="24">
     <path
         android:strokeColor="#000000"
-        android:strokeWidth="1.8"
+        android:strokeWidth="2"
         android:strokeLineJoin="round"
         android:strokeLineCap="round"
         android:fillColor="#00000000"
-        android:pathData="M7,7h.01 M7,12h.01 M7,17h.01 M11,7h9 M11,12h9 M11,17h9" />
+        android:pathData="M8,6h13M8,12h13M8,18h13M3,6h0.01M3,12h0.01M3,18h0.01" />
 </vector>
