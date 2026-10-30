@@ -66,12 +66,23 @@ class NanoServer implements Runnable {
             }
             byte[] body = readBody(bis, contentLen);
 
-            if ("GET".equals(method) && "/ping".equals(path)) {
+            if ("GET".equals(method) && "/ping".equals(pathNoQuery(path))) {
                 respond(s, 200, "{\"pong\":true,\"service\":\"vn-android\","
                         + "\"libopus\":true,\"key\":" + (svc.hasKey()) + "}");
-            } else if ("GET".equals(method) && "/sync".equals(path)) {
-                respond(s, 200, svc.getSyncData());
-            } else if ("POST".equals(method) && "/transcribe".equals(path)) {
+            } else if ("GET".equals(method) && "/sync".equals(pathNoQuery(path))) {
+                // Пагинация: since=updated_at курсор (включительно не берём — next_since=+1),
+                // limit=макс. заметок в ответе. Без параметров — полный дамп (легаси-часы).
+                java.util.Map<String, String> q = parseQuery(path);
+                long since = 0;
+                int limit = 0;
+                try {
+                    String sv = q.get("since");
+                    if (sv != null && !sv.isEmpty()) since = Long.parseLong(sv);
+                    String lv = q.get("limit");
+                    if (lv != null && !lv.isEmpty()) limit = Math.max(1, Math.min(200, Integer.parseInt(lv)));
+                } catch (Exception ignore) {}
+                respond(s, 200, svc.getSyncData(since, limit));
+            } else if ("POST".equals(method) && "/transcribe".equals(pathNoQuery(path))) {
                 String resp = svc.handleTranscribe(new String(body, StandardCharsets.UTF_8));
                 respond(s, 200, resp);
             } else {
@@ -115,6 +126,36 @@ class NanoServer implements Runnable {
             off += r;
         }
         return body;
+    }
+
+    /** Путь без query-части: "/sync?since=..&limit=.." → "/sync". */
+    static String pathNoQuery(String path) {
+        int q = path.indexOf('?');
+        return q >= 0 ? path.substring(0, q) : path;
+    }
+
+    /** Примитивный parse query string: a=1&b=x%20y → {a:"1", b:"x y"}. */
+    static java.util.Map<String, String> parseQuery(String path) {
+        java.util.Map<String, String> out = new java.util.HashMap<>();
+        int q = path.indexOf('?');
+        if (q < 0) return out;
+        String query = path.substring(q + 1);
+        for (String pair : query.split("&")) {
+            if (pair.isEmpty()) continue;
+            int eq = pair.indexOf('=');
+            String k = eq >= 0 ? dec(pair.substring(0, eq)) : dec(pair);
+            String v = eq >= 0 ? dec(pair.substring(eq + 1)) : "";
+            if (!k.isEmpty()) out.put(k, v);
+        }
+        return out;
+    }
+
+    private static String dec(String s) {
+        try {
+            return java.net.URLDecoder.decode(s, "UTF-8");
+        } catch (Exception e) {
+            return s;
+        }
     }
 
     private void respond(Socket s, int code, String body) throws Exception {

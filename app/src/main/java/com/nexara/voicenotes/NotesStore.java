@@ -91,6 +91,58 @@ public class NotesStore {
         return out;
     }
 
+    /**
+     * Пагинация для /sync?since=&limit=:
+     * заметки с updated_at > since (строго), отсортированные по updated_at ASC
+     * (курсор идёт вперёд), не больше limit штук. Метод для записи транскрипта
+     * и состояния обновляет updated_at, поэтому курсор подхватывает и статус
+     * своих записей (queued→done/error), чей ts не меняется.
+     */
+    public List<Note> listSince(long since, int limit) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        String where = NotesDbHelper.COL_UPDATED_AT + " > ?";
+        String[] args = new String[]{String.valueOf(since)};
+        String order = NotesDbHelper.COL_UPDATED_AT + " ASC";
+        Cursor c = db.query(NotesDbHelper.TABLE, null, where, args, null, null, order);
+        ArrayList<Note> out = new ArrayList<>();
+        try {
+            while (c.moveToNext() && (limit <= 0 || out.size() < limit)) {
+                out.add(cursorToNote(c));
+            }
+        } finally {
+            c.close();
+        }
+        return out;
+    }
+
+    /** Есть ли ещё заметки после since (для has_more)? */
+    public boolean hasMoreSince(long since) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor c = db.rawQuery(
+            "SELECT 1 FROM " + NotesDbHelper.TABLE + " WHERE " + NotesDbHelper.COL_UPDATED_AT + " > ? LIMIT 1",
+            new String[]{String.valueOf(since)});
+        try {
+            return c.moveToFirst();
+        } finally {
+            c.close();
+        }
+    }
+
+    /** Максимальный updated_at среди заметок со updated_at > since (или since+1). */
+    public long maxUpdatedAtAfter(long since) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor c = db.rawQuery(
+            "SELECT MAX(" + NotesDbHelper.COL_UPDATED_AT + ") FROM " + NotesDbHelper.TABLE
+                + " WHERE " + NotesDbHelper.COL_UPDATED_AT + " > ?",
+            new String[]{String.valueOf(since)});
+        try {
+            if (c.moveToFirst() && !c.isNull(0)) return c.getLong(0);
+            return since;
+        } finally {
+            c.close();
+        }
+    }
+
     public Note getById(long id) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor c = db.query(NotesDbHelper.TABLE, null,

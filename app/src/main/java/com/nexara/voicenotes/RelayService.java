@@ -231,17 +231,34 @@ public class RelayService extends Service {
         return "{\"error\":" + jsonString(msg) + "}";
     }
 
-    /** Все заметки в JSON — для GET /sync (часы подтягивают изменения с телефона). */
+    /** Полный дамп (легаси) — для старых часов: /sync без параметров. */
     String getSyncData() {
+        return getSyncData(0, 0);
+    }
+
+    /**
+     * Заметки в JSON для GET /sync.
+     *
+     * since=0 → полный дамп (старые часы, обратная совместимость).
+     * since>0 → пагинация: заметки с updated_at > since (строго), sorted ASC,
+     * до `limit` штук; в ответе next_since (для следующего запроса) и has_more.
+     */
+    String getSyncData(long since, int limit) {
         try {
-            java.util.List<NotesStore.Note> notes = store.list();
+            // Пагинация активна, когда запрошен limit (явно). since=0&limit=N →
+            // первый забор с самого начала; next_since/has_more возвращаются всегда,
+            // чтобы часы двигали курсор даже с нуля.
+            final boolean paged = limit > 0;
+            java.util.List<NotesStore.Note> notes = paged ? store.listSince(since, limit) : store.list();
             StringBuilder sb = new StringBuilder("{\"notes\":[");
             boolean first = true;
+            long lastUpd = since;
             for (NotesStore.Note n : notes) {
                 if (!first) sb.append(",");
                 first = false;
                 sb.append("{\"id\":").append(n.id)
                   .append(",\"ts\":").append(n.ts)
+                  .append(",\"upd\":").append(n.updatedAt)
                   .append(",\"dur\":").append(n.durSec)
                   .append(",\"size\":").append(n.sizeBytes)
                   .append(",\"text\":").append(jsonString(n.text == null ? "" : n.text))
@@ -270,8 +287,18 @@ public class RelayService extends Service {
                     sb.append("]");
                 }
                 sb.append("}");
+                if (n.updatedAt > lastUpd) lastUpd = n.updatedAt;
             }
-            sb.append("]}");
+            sb.append("]");
+            if (paged) {
+                // Курсор: next_since = max(updated) страницы + 1 (NOT >=, чтобы двигаться).
+                // has_more — есть ли реально заметки за последней в странице.
+                sb.append(",\"next_since\":").append(lastUpd + 1)
+                  .append(",\"has_more\":").append(store.hasMoreSince(lastUpd))
+                  .append("}");
+            } else {
+                sb.append("}");
+            }
             return sb.toString();
         } catch (Exception e) {
             return jsonError("sync: " + e.getMessage());
